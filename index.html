@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#092c28"><meta name="description" content="Uma noite de Sequence: jogue sozinho contra Iverson, Ana Paula e Gabriela. Duelo ou duplas, três dificuldades e música.">
+<title>Sequence · Noite de jogo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23092c28'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-size='48' fill='%23eac57e'%3E♠%3C/text%3E%3C/svg%3E">
+<style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+:root{color-scheme:dark;--bg:#092c28;--panel:#113b35;--line:#ffffff18;--gold:#eac57e;--text:#f8f4e9;--muted:#b3c6bc;--blue:#62b9ff;--green:#75dfa4;--red:#a83242}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 24% 30%,#15504677,transparent 55%),var(--bg);color:var(--text);font:16px 'DM Sans',system-ui,sans-serif;min-height:100vh}button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px}button{border:0}a{color:var(--gold)}.hidden{display:none!important}.topbar{max-width:1440px;margin:auto;min-height:94px;padding:22px 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-size:20px;font-weight:700;letter-spacing:3px;text-decoration:none}.brand-symbol{font-size:35px;color:var(--gold)}.brand small{font-size:10px;color:var(--muted);letter-spacing:2px;border-left:1px solid #ffffff30;padding-left:14px;margin-left:5px}.topbar nav{display:flex;gap:10px}.quiet{background:transparent;color:var(--text);padding:10px 14px;border-radius:9px}.quiet:hover{background:#ffffff0c}.home{max-width:1160px;margin:52px auto 38px;display:grid;grid-template-columns:1.2fr 1fr;gap:9%;padding:0 30px;align-items:center}.eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gold)}h1,h2,p{margin-top:0}.welcome h1{font:500 clamp(42px,4.8vw,65px)/1.12 'Playfair Display',Georgia,serif;letter-spacing:-1.5px;margin:20px 0}.welcome h1 em{color:var(--gold);font-weight:500}.welcome p{line-height:1.7;color:var(--muted)}.panel{background:linear-gradient(140deg,#ffffff05,transparent),var(--panel);border:1px solid var(--line);border-radius:20px}.setup{padding:32px;box-shadow:0 22px 70px #0002}.setup h2{font:500 34px 'Playfair Display',Georgia,serif;margin:10px 0 26px}.field{display:flex;flex-direction:column;gap:9px;margin-bottom:21px;font-size:14px}input[type=text],input:not([type]),select{border:1px solid #ffffff25;background:#082b28;color:var(--text);border-radius:9px;padding:12px 14px;width:100%}select{color-scheme:dark}fieldset{border:0;margin:0 0 22px;padding:0;min-width:0}legend{font-size:14px;margin-bottom:10px}.segmented{display:flex;gap:8px}.segmented label{flex:1;position:relative;cursor:pointer}.segmented input{position:absolute;opacity:0;width:1px;height:1px}.segmented span{display:block;border:1px solid #ffffff25;border-radius:10px;padding:13px 7px;text-align:center;transition:.15s}.segmented input:checked+span{border-color:var(--gold);background:#eac57e12;color:var(--gold)}.segmented input:focus-visible+span{outline:3px solid white;outline-offset:2px}.modes strong,.modes small{display:block}.modes small{font-size:12px;margin-top:5px;color:var(--muted)}.difficulty span{font-size:14px;padding:11px 4px}.muted{color:var(--muted)}.field-help{font-size:12px;line-height:1.5;min-height:36px;margin:9px 0 0}.checkline{display:flex;align-items:center;gap:9px;font-size:14px;margin:4px 0 22px}.checkline .muted{margin-left:auto}.checkline input{accent-color:var(--gold);width:17px;height:17px}.primary{background:var(--gold);color:#14332b;border-radius:10px;padding:14px 20px;font-weight:700;transition:transform .15s,background .15s}.primary:hover{background:#f6d89f;transform:translateY(-1px)}.secondary{border:1px solid #eac57e66;background:transparent;color:var(--gold);border-radius:10px;padding:12px 16px}.secondary:hover{background:#eac57e12}.start{width:100%;display:flex;justify-content:space-between;font-size:16px}.setup .secondary{width:100%;margin-top:10px}.setup-note{text-align:center;font-size:12px;color:var(--muted);margin:17px 0 0}.preview-frame{position:relative;width:360px;max-width:88%;margin:25px 0 15px;perspective:700px}.mini-board{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:10px;background:#15493b;border:2px solid #b9975a;border-radius:12px;transform:rotate(-6deg) rotateX(16deg);box-shadow:0 16px 40px #0004}.mini-cell{height:24px;border-radius:2px;background:#efe9d5;color:#233b31;text-align:center;font:9px Georgia,serif;display:grid;place-items:center;position:relative}.mini-cell.red{color:var(--red)}.mini-cell.corner{background:#eac57e;color:#113b35}.mini-token{width:17px;height:17px;border-radius:50%;border:3px double #ffffff9a;background:#2582cc;position:absolute;box-shadow:0 1px 3px #0008}.mini-token.g{background:#198e5b}.table-seal{position:absolute;right:-45px;bottom:20px;background:var(--gold);color:#113b35;width:112px;height:112px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(10deg);font-size:10px;letter-spacing:1px;box-shadow:0 8px 25px #0004}.table-seal strong{font:italic 20px Georgia,serif;letter-spacing:0;margin-top:4px}.welcome-footer{display:flex;gap:22px;font-size:12px;color:var(--muted);margin-top:30px}.footer{max-width:1300px;margin:32px auto 0;padding:23px 30px;display:flex;justify-content:space-between;color:#91afa1;font-size:11px;gap:20px;border-top:1px solid var(--line)}.footer span:first-child{letter-spacing:2px}
+.game{max-width:1200px;margin:28px auto;padding:0 26px}.game-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.game-heading h1{font:500 31px 'Playfair Display',Georgia,serif;margin:7px 0 0}.goal-pill{font-size:12px;color:var(--muted);background:#ffffff08;border:1px solid var(--line);border-radius:30px;padding:12px 18px}.goal-pill strong{color:var(--gold);margin-left:8px}.table-layout{display:grid;grid-template-columns:minmax(0,1fr) 256px;gap:24px;align-items:start}.players{display:flex;gap:8px;margin-bottom:15px}.player{flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#ffffff04}.player.active{border-color:var(--gold);background:#eac57e0d}.avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#62b9ff20;color:var(--blue);font-size:14px;flex-shrink:0;border:1px solid #62b9ff55}.avatar.t1{background:#75dfa420;border-color:#75dfa455;color:var(--green)}.player strong{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.player small{font-size:10px;color:var(--muted);display:block;margin-top:4px}.player>div:last-child{min-width:0}.board-frame{padding:13px;border-radius:18px;background:linear-gradient(135deg,#987640,#e3c789 48%,#8e6939);box-shadow:0 14px 40px #0004}.board{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;background:#194b3c;padding:9px;border:2px solid #173e30;border-radius:9px}.cell{position:relative;aspect-ratio:1/.94;border-radius:5px;background:#f2ecd9;color:#273c35;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1px;box-shadow:inset 0 -2px 0 #0001;transition:filter .15s,transform .15s;font-family:Georgia,serif;min-width:0}.cell .rank{font-size:clamp(13px,1.5vw,21px);font-weight:bold;line-height:1}.cell .suit{font-size:clamp(15px,1.9vw,25px);line-height:1}.cell.red{color:var(--red)}.cell.corner{background:#dcc080;color:#214f3c;font-size:26px}.cell.corner small{font:7px 'DM Sans',sans-serif;letter-spacing:1px}.cell.legal{outline:3px solid #ffe5a6;outline-offset:0;box-shadow:0 0 12px #ffe19a99;z-index:1;background:#fff9e5;cursor:pointer}.cell.legal:hover{transform:scale(1.07)}.board.selecting .cell:not(.legal){filter:brightness(.68)}.board.selecting .cell.occupied{filter:brightness(.88)}.cell.last:after{content:'';position:absolute;inset:-2px;border:2px solid #ffda83;border-radius:6px;pointer-events:none}.chip{width:80%;height:85%;border-radius:50%;background:radial-gradient(circle at 32% 25%,#75caff,#2584c6 68%,#174e87);border:4px double #bde9ff;box-shadow:0 3px 3px #0006,inset 0 0 0 3px #124e7433;position:absolute;display:grid;place-items:center;color:white;font:700 clamp(13px,1.5vw,22px) 'DM Sans',sans-serif;text-shadow:0 1px 2px #0008;animation:place .22s ease-out}.chip.t1{background:radial-gradient(circle at 32% 25%,#76e6a9,#219264 68%,#126443);border-color:#b1f5ca}.chip.protected{box-shadow:0 0 0 2px var(--gold),0 3px 5px #0006}.board-caption{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin-top:13px;font-size:10px;color:var(--muted)}.legend-chip{font-style:normal}.blue{color:var(--blue)}.green{color:var(--green)}.sidebar{display:flex;flex-direction:column;gap:14px}.sidebar .panel{padding:20px;border-radius:15px}.sidebar h2{font:500 23px 'Playfair Display',Georgia,serif;margin:9px 0 18px}.score-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}.score-row span{font-size:13px}.score-dots{display:flex;gap:7px}.score-dot{display:grid;place-items:center;width:25px;height:25px;border:1px solid #ffffff35;border-radius:50%;color:#ffffff30;font-size:13px}.score-dot.filled{background:var(--gold);color:#173f33;border-color:var(--gold)}.turn-panel{border-color:#eac57e4a!important}.turn-panel h2{margin-bottom:9px}.turn-panel p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:0}.turn-panel button{width:100%;margin-top:14px;font-size:13px;padding:12px 8px}.deck-panel{display:flex;gap:12px;align-items:center}.card-back{width:42px;height:61px;border:3px double var(--gold);border-radius:5px;display:grid;place-items:center;background:repeating-linear-gradient(45deg,#1b4d42,#1b4d42 3px,#285d4c 3px,#285d4c 5px);color:var(--gold);font-size:25px;flex-shrink:0;box-shadow:3px 2px 0 #efe6ca}.deck-panel strong{font-size:13px}.deck-panel p{font-size:11px;margin:5px 0}.deck-panel small{font-size:10px;color:var(--muted);line-height:1.5;display:block}.history summary{cursor:pointer;font-size:13px}.history ol{padding-left:18px;max-height:210px;overflow:auto;margin-bottom:0}.history li{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:9px}.hand-panel{padding:20px 25px;margin-top:24px}.hand-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.hand-heading h2{font:500 22px 'Playfair Display',Georgia,serif;margin:5px 0 0}.hand-heading>span{font-size:12px}.hand{display:flex;gap:10px;justify-content:center;padding-top:8px}.hand-card{background:#f5efdf;color:#273c35;position:relative;border:2px solid transparent;border-radius:9px;width:83px;height:112px;flex-shrink:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 6px #0003;transition:transform .18s,border .18s;font-family:Georgia,serif}.hand-card.red{color:var(--red)}.hand-card .rank{font-size:27px;line-height:1.1}.hand-card .suit{font-size:35px;line-height:1}.hand-card .corner-rank{position:absolute;top:6px;left:6px;font-size:12px}.hand-card .card-tag{font:700 8px 'DM Sans',sans-serif;letter-spacing:.4px;margin-top:6px;color:#294637}.hand-card.selected{transform:translateY(-10px);border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 8px 20px #0004}.hand-card:not(:disabled):hover{transform:translateY(-7px)}.hand-card.dead{background:#cbc9bd}.hand-card:disabled{opacity:.8}.hand-help{text-align:center;color:var(--muted);font-size:12px;min-height:20px;margin:16px 0 0}
+dialog{border:1px solid #eac57e55;background:#10392f;color:var(--text);border-radius:20px;width:min(620px,calc(100% - 28px));max-height:85vh;padding:34px;box-shadow:0 25px 90px #0009}dialog::backdrop{background:#00130ee0;backdrop-filter:blur(5px)}.close{position:absolute;top:9px;right:10px;font-size:25px;padding:2px 12px}dialog h2{font:500 32px 'Playfair Display',Georgia,serif;margin:10px 25px 20px 0}dialog h3{font-size:16px;color:var(--gold);margin-top:23px}dialog p,dialog li{font-size:14px;line-height:1.7;color:#d2dfd5}dialog .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}dialog input[type=range]{accent-color:var(--gold);width:100%}.rule-cards{display:flex;gap:10px}.rule-cards span{background:#f5efdf;border-radius:7px;padding:12px;color:#203f33;font:24px Georgia,serif}.rule-cards .red{color:var(--red)}.result{text-align:center;padding:16px 0}.result-icon{font-size:60px;color:var(--gold);margin-bottom:18px}.result .actions{justify-content:center}.result h2{margin-right:0}.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);padding:12px 22px;background:#f1d59a;color:#153d2b;box-shadow:0 8px 30px #0005;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:10;max-width:90%;font-size:14px}.toast.show{opacity:1;transform:translate(-50%,0)}
+@keyframes place{from{transform:scale(.7);opacity:.3}to{transform:scale(1);opacity:1}}
+@media(min-width:1450px){.home{margin-top:70px}.preview-frame{width:390px}.mini-cell{height:27px}}
+@media(max-width:950px){.home{gap:5%;padding:0 25px}.setup{padding:25px}.welcome h1{font-size:48px}.brand small{display:none}.table-layout{grid-template-columns:minmax(0,1fr) 215px;gap:16px}.sidebar .panel{padding:15px}.player{padding:8px 6px;gap:5px}.avatar{width:28px;height:28px;font-size:11px}.player strong{font-size:11px}.player small{font-size:9px}.board{gap:3px;padding:6px}.board-frame{padding:9px}.chip{border-width:3px}}
+@media(max-width:700px){.topbar{padding:14px 18px;min-height:70px}.brand{font-size:16px;gap:7px;letter-spacing:2px}.brand-symbol{font-size:28px}.topbar nav{gap:0}.quiet{font-size:12px;padding:9px}.home{display:flex;flex-direction:column;align-items:stretch;margin:27px auto;padding:0 22px;max-width:470px;gap:24px}.welcome h1{font-size:43px;margin:12px 0}.welcome p{font-size:14px;margin-bottom:0}.preview-frame,.welcome-footer{display:none}.setup{padding:25px}.setup h2{font-size:28px;margin-bottom:20px}.game{padding:0 12px;margin-top:20px}.game-heading{margin-bottom:15px}.game-heading h1{font-size:24px}.goal-pill{font-size:10px;padding:9px 11px}.table-layout{display:flex;flex-direction:column;gap:14px}.table-main{width:100%}.sidebar{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:10px}.sidebar .deck-panel{display:none}.history{grid-column:1/-1}.score-panel h2{font-size:20px;margin-bottom:8px}.sidebar .eyebrow{font-size:9px;letter-spacing:1px}.turn-panel h2{font-size:20px;margin-top:7px}.turn-panel p{font-size:12px}.sidebar .panel{padding:14px}.score-row{margin-top:12px}.score-row span{font-size:11px}.players{gap:5px;margin-bottom:10px}.player{flex-direction:column;text-align:center;padding:8px 3px;gap:6px}.player strong{font-size:11px}.player small{font-size:9px}.avatar{width:27px;height:27px}.board-frame{padding:7px;border-radius:12px}.board{gap:3px;padding:5px;border-radius:7px}.cell{aspect-ratio:1/1.05;border-radius:3px}.cell .rank{font-size:clamp(11px,3vw,17px)}.cell .suit{font-size:clamp(13px,3.6vw,21px)}.cell.corner{font-size:20px}.cell.corner small{font-size:5px}.chip{border-width:3px;font-size:12px}.cell.legal{outline-width:2px}.board-caption{gap:8px;font-size:9px}.hand-panel{padding:16px 12px;margin-top:14px}.hand-heading h2{font-size:20px}.hand-heading .eyebrow{font-size:10px}.hand{gap:6px}.hand-card{height:85px;width:63px;border-radius:6px}.hand-card .rank{font-size:21px}.hand-card .suit{font-size:27px}.hand-card .corner-rank{font-size:9px;left:3px;top:3px}.hand-card .card-tag{font-size:6px}.hand-help{font-size:11px}.footer{margin-top:22px;padding:18px;flex-direction:column;gap:8px;text-align:center;font-size:10px}dialog{padding:28px 22px}dialog h2{font-size:28px}.desktop{display:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+</style>
+
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#" id="brand"><span class="brand-symbol">♠</span> SEQUENCE <small>NOITE DE JOGO</small></a><nav aria-label="Opções"><button class="quiet" id="rules">Como jogar</button><button class="quiet" id="sound">♫ Som</button><button class="quiet hidden" id="pause">Ⅱ Pausar</button></nav></header>
+<main>
+<section id="home" class="home">
+<div class="welcome"><span class="eyebrow">A MESA ESTÁ PRONTA</span><h1>Uma carta.<br>Uma jogada.<br><em>Cinco em linha.</em></h1><p>Escolha sua companhia, encontre sua estratégia<br class="desktop"> e conquiste duas sequências.</p><div class="preview-frame"><div id="mini-board" class="mini-board" aria-hidden="true"></div><span class="table-seal">SUA PRÓXIMA<br><strong>boa jogada</strong></span></div><div class="welcome-footer"><span>♣ 2 baralhos</span><span>✦ 2 sequências para vencer</span></div></div>
+<form id="setup" class="setup panel">
+<div class="setup-heading"><span class="eyebrow">ESCOLHA SUA PARTIDA</span><h2>Vamos jogar?</h2></div>
+<label class="field">Seu nome<input id="player-name" maxlength="24" placeholder="Você" autocomplete="given-name"></label>
+<fieldset><legend>Modo de jogo</legend><div class="segmented modes"><label><input type="radio" name="mode" value="2" checked><span><strong>Duelo</strong><small>Você + 1 bot</small></span></label><label><input type="radio" name="mode" value="4"><span><strong>Duplas</strong><small>Você + 3 bots</small></span></label></div></fieldset>
+<label class="field"><span id="companion-label">Seu adversário</span><select id="companion"><option>Iverson</option><option>Ana Paula</option><option>Gabriela</option></select></label>
+<fieldset><legend>Dificuldade dos bots</legend><div class="segmented difficulty"><label><input type="radio" name="difficulty" value="easy"><span>Fácil</span></label><label><input type="radio" name="difficulty" value="medium" checked><span>Médio</span></label><label><input type="radio" name="difficulty" value="hard"><span>Difícil</span></label></div><p id="difficulty-info" class="muted field-help">Forma sequências e procura bloquear suas jogadas.</p></fieldset>
+<label class="checkline"><input type="checkbox" id="start-music" checked> Música ambiente <span class="muted">♫</span></label>
+<button class="primary start" type="submit">Começar partida <span>→</span></button>
+<button type="button" id="continue" class="secondary hidden">Continuar partida salva</button>
+<p class="setup-note">Só você e os bots. Sem cadastro, sem espera.</p>
+</form>
+</section>
+<section id="game" class="game hidden" aria-label="Mesa de jogo">
+<div class="game-heading"><div><span class="eyebrow" id="game-mode">DUELO</span><h1>Sua mesa de jogo</h1></div><div class="goal-pill">Objetivo <strong>2 sequências</strong></div></div>
+<div class="table-layout">
+<div class="table-main"><div id="players" class="players"></div><div class="board-frame"><div id="board" class="board" role="group" aria-label="Tabuleiro de 10 por 10"></div></div><div class="board-caption"><span><i class="legend-chip blue">●</i> Sua equipe</span><span><i class="legend-chip green">◆</i> Adversários</span><span>✦ Canto livre</span><span>★ Sequência protegida</span></div></div>
+<aside class="sidebar"><div class="panel score-panel"><span class="eyebrow">A CORRIDA ATÉ DUAS</span><h2>Sequências</h2><div id="score"></div></div><div class="panel turn-panel"><div class="eyebrow" id="turn-label">SUA VEZ</div><h2 id="turn-title">Escolha uma carta</h2><p id="status" aria-live="polite"></p><button id="draw" class="primary hidden">Comprar carta</button><button id="exchange" class="secondary hidden">Trocar carta morta</button><button id="pass" class="secondary hidden">Passar a vez</button></div><div class="panel deck-panel"><div class="card-back" aria-hidden="true">♠</div><div><strong id="deck-count"></strong><p class="muted">no monte de compra</p><small>Os descartes voltam ao monte quando ele acaba.</small></div></div><details class="history panel"><summary>Últimas jogadas</summary><ol id="history"></ol></details></aside>
+</div>
+<div class="hand-panel panel"><div class="hand-heading"><div><span class="eyebrow">SUAS CARTAS</span><h2 id="hand-title">Escolha sua próxima jogada</h2></div><span class="muted" id="hand-count"></span></div><div id="hand" class="hand"></div><p id="card-help" class="hand-help">Selecione uma carta para iluminar as casas disponíveis.</p></div>
+</section>
+</main>
+<footer class="footer"><span>SEQUENCE · NOITE DE JOGO</span><span>Adaptação independente para jogar com bots.</span></footer>
+<dialog id="modal"><button class="close quiet" id="close-modal" aria-label="Fechar">×</button><div id="modal-content"></div></dialog>
+<div id="toast" class="toast" role="status"></div>
+<script>/* Sequence: rules and bot engine. No network or dependencies. */
+(function(root){
+'use strict';
+const BOARD = [
+'*,10S,QS,KS,AS,2D,3D,4D,5D,*',
+'9S,10H,9H,8H,7H,6H,5H,4H,3H,6D',
+'8S,QH,7D,8D,9D,10D,QD,KD,2H,7D',
+'7S,KH,6D,2S,AH,KH,QH,AD,2C,8D',
+'6S,AH,5D,3S,4H,3H,10H,AC,3C,9D',
+'5S,2C,4D,4S,5H,2H,9H,KC,4C,10D',
+'4S,3C,3D,5S,6H,7H,8H,QC,5C,QD',
+'3S,4C,2D,6C,7C,8C,9C,10C,6S,KD',
+'2S,5C,AS,KS,QS,10S,9S,8S,7S,AD',
+'*,6C,7C,8C,9C,10C,QC,KC,AC,*'
+].flatMap(r=>r.split(','));
+const LINES=[];
+for(let r=0;r<10;r++)for(let c=0;c<10;c++)for(const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+ if(r+dr*4<10&&c+dc*4<10&&c+dc*4>=0)LINES.push(Array.from({length:5},(_,k)=>(r+dr*k)*10+c+dc*k));
+}
+const AT=BOARD.map((_,i)=>LINES.filter(l=>l.includes(i)));
+const suits={S:'♠',H:'♥',D:'♦',C:'♣'};
+const names={S:'espadas',H:'copas',D:'ouros',C:'paus'};
+const rank=c=>c.slice(0,-1), suit=c=>c.slice(-1);
+const label=c=>c==='*'?'Canto livre':rank(c)+suits[suit(c)];
+const fullLabel=c=>c==='*'?'Canto livre':(rank(c)==='J'?'Valete':rank(c)==='Q'?'Dama':rank(c)==='K'?'Rei':rank(c)==='A'?'Ás':rank(c))+' de '+names[suit(c)];
+const wild=c=>c==='JC'||c==='JD', remove=c=>c==='JH'||c==='JS';
+function shuffle(a,rng=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function deck(){return Array.from({length:2},()=>['S','H','D','C'].flatMap(s=>['A','2','3','4','5','6','7','8','9','10','J','Q','K'].map(r=>r+s))).flat();}
+function create(config,rng=Math.random){
+ const bots=['Iverson','Ana Paula','Gabriela'];
+ const players=config.count===4?[{name:config.name||'Você',team:0},{name:bots.filter(n=>n!==config.partner)[0],team:1},{name:config.partner,team:0},{name:bots.filter(n=>n!==config.partner)[1],team:1}]:[{name:config.name||'Você',team:0},{name:config.opponent||'Iverson',team:1}];
+ const s={version:1,config,players,board:Array(100).fill(null),sequences:[[],[]],hands:players.map(()=>[]),deck:shuffle(deck(),rng),discards:players.map(()=>[]),turn:0,phase:'play',exchanged:false,winner:null,move:0,passes:0,last:null,log:[]};
+ players.forEach((_,p)=>{for(let i=0;i<(config.count===4?6:7);i++)s.hands[p].push(s.deck.pop());});
+ s.dealer=Math.floor(rng()*players.length);s.turn=(s.dealer+1)%players.length;
+ return s;
+}
+const locked=(s,i)=>s.sequences.some(lines=>lines.some(l=>l.includes(i)));
+function legal(s,card,team){
+ if(!card)return [];
+ return BOARD.flatMap((c,i)=>{
+  if(c==='*')return [];
+  if(remove(card))return s.board[i]!==null&&s.board[i]!==team&&!locked(s,i)?[i]:[];
+  return s.board[i]===null&&(wild(card)||card===c)?[i]:[];
+ });
+}
+const dead=(s,c)=>c&&rank(c)!=='J'&&BOARD.every((v,i)=>v!==c||s.board[i]!==null);
+function draw(s,rng=Math.random){
+ if(!s.deck.length){s.deck=shuffle(s.discards.flat(),rng);s.discards=s.players.map(()=>[]);}
+ return s.deck.pop()||null;
+}
+function exchange(s,ci,rng=Math.random){
+ if(s.phase!=='play'||s.winner!==null||s.exchanged||!dead(s,s.hands[s.turn][ci]))return false;
+ const card=s.hands[s.turn].splice(ci,1)[0];s.discards[s.turn].push(card);
+ const replacement=draw(s,rng);if(replacement)s.hands[s.turn].push(replacement);
+ s.exchanged=true;return card;
+}
+function candidates(s,team){
+ return LINES.filter(l=>l.every(i=>BOARD[i]==='*'||s.board[i]===team)&&s.sequences[team].every(old=>l.filter(i=>old.includes(i)).length<=1));
+}
+function bestClaims(s,team){
+ const cs=candidates(s,team);
+ if(s.sequences[team].length)return cs.slice(0,1);
+ for(let a=0;a<cs.length;a++)for(let b=a+1;b<cs.length;b++)if(cs[a].filter(i=>cs[b].includes(i)).length<=1)return [cs[a],cs[b]];
+ return cs.slice(0,1);
+}
+function play(s,ci,i){
+ if(s.phase!=='play'||s.winner!==null)return false;
+ const p=s.turn,team=s.players[p].team,card=s.hands[p][ci];
+ if(!legal(s,card,team).includes(i))return false;
+ s.hands[p].splice(ci,1);s.discards[p].push(card);
+ s.board[i]=remove(card)?null:team;
+ const claims=remove(card)?[]:bestClaims(s,team);
+ s.sequences[team].push(...claims);
+ s.last={player:p,card,index:i,remove:remove(card),claims:claims.length};
+ s.move++;s.passes=0;
+ if(s.sequences[team].length>=2){s.winner=team;s.phase='over';}
+ else s.phase='draw';
+ return s.last;
+}
+function advance(s){s.turn=(s.turn+1)%s.players.length;s.phase='play';s.exchanged=false;}
+function finish(s,rng=Math.random){if(s.phase!=='draw')return false;const c=draw(s,rng);if(c)s.hands[s.turn].push(c);advance(s);return true;}
+function pass(s){
+ if(s.phase!=='play'||s.winner!==null||s.hands[s.turn].some(c=>legal(s,c,s.players[s.turn].team).length)||(!s.exchanged&&s.hands[s.turn].some(c=>dead(s,c))))return false;
+ s.passes++;
+ // A full round with no legal moves and no possible dead-card exchange is a draw.
+ if(s.passes>=s.players.length&&s.players.every((p,j)=>!s.hands[j].some(c=>legal(s,c,p.team).length||dead(s,c)))){s.winner='draw';s.phase='over';}
+ else advance(s);
+ return true;
+}
+function potential(s,team){
+ const weights=[0,1,7,45,650,18000];
+ let v=0;
+ for(const l of LINES){
+  if(!s.sequences[team].every(old=>l.filter(i=>old.includes(i)).length<=1))continue;
+  let n=0,blocked=false;
+  for(const i of l){if(BOARD[i]==='*'||s.board[i]===team)n++;else if(s.board[i]!==null){blocked=true;break;}}
+  if(!blocked)v+=weights[n];
+ }
+ return v;
+}
+function threats(s,team){
+ const out=new Set();
+ for(const l of LINES){
+  if(!s.sequences[team].every(old=>l.filter(i=>old.includes(i)).length<=1))continue;
+  const empties=l.filter(i=>BOARD[i]!=='*'&&s.board[i]===null);
+  if(empties.length===1&&l.every(i=>BOARD[i]==='*'||s.board[i]===null||s.board[i]===team))out.add(empties[0]);
+ }
+ return out.size;
+}
+function choose(s,level='medium',rng=Math.random){
+ const team=s.players[s.turn].team,other=1-team;
+ const moves=s.hands[s.turn].flatMap((card,ci)=>legal(s,card,team).map(i=>({ci,i,card})));
+ if(!moves.length)return null;
+ if(level==='easy'&&rng()<0.72)return moves[Math.floor(rng()*moves.length)];
+ const beforeOwn=potential(s,team),beforeOther=potential(s,other);
+ for(const m of moves){
+  const prev=s.board[m.i];s.board[m.i]=remove(m.card)?null:team;
+  const claims=bestClaims(s,team).length;
+  let value=(potential(s,team)-beforeOwn)+(beforeOther-potential(s,other))*(level==='hard'?1.15:0.72);
+  if(claims)value+=claims*50000+(s.sequences[team].length+claims>=2?10000000:0);
+  if(level==='hard'){
+   const enemyThreat=threats(s,other),ownThreat=threats(s,team);
+   value-=enemyThreat*(s.sequences[other].length?350000:40000);
+   if(ownThreat>1)value+=ownThreat*12000;
+   value-=wild(m.card)?80:0;
+   // Only own hand and public board are used; hidden opponent cards never enter scoring.
+   value+=s.hands[s.turn].reduce((n,c,ci)=>n+(ci!==m.ci&&AT[m.i].some(l=>l.some(j=>BOARD[j]===c&&s.board[j]===null))?3:0),0);
+  }
+  value+=rng()*(level==='easy'?500:level==='medium'?25:0.5);
+  m.value=value;s.board[m.i]=prev;
+ }
+ moves.sort((a,b)=>b.value-a.value);return moves[0];
+}
+const api={BOARD,LINES,create,deck,legal,dead,exchange,play,finish,pass,choose,locked,label,fullLabel,wild,remove,rank,suit,suits,bestClaims,candidates};
+if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Sequence=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>'use strict';
+const E=Sequence,$=id=>document.getElementById(id);
+let state=null,selected=-1,timer=null,paused=false,toastTimer;
+const SAVE='sequence-noite-v1',SETTINGS='sequence-audio-v1';
+let prefs={music:true,effects:true,volume:35,track:'lounge'};
+try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
+function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function storageRemove(k){try{localStorage.removeItem(k);}catch{}}
+function saved(){try{const x=JSON.parse(localStorage.getItem(SAVE)||'null');return x&&x.version===1&&x.board?.length===100&&Array.isArray(x.hands)&&x.players?.length===x.hands.length&&x.winner===null?x:null;}catch{return null;}}
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2800);}
+function save(){if(state?.winner===null)storageSet(SAVE,state);}
+function log(text){state.log.unshift(text);state.log=state.log.slice(0,35);}
+function toggle(id,visible){$(id).classList.toggle('hidden',!visible);}
+const audio={
+ ctx:null,bus:null,interval:null,step:0,
+ init(){try{if(!this.ctx){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);}this.ctx.resume();this.bus.gain.setTargetAtTime(prefs.volume/100*.25,this.ctx.currentTime,.05);}catch{}},
+ tone(freq,length=.3,offset=0,volume=.3,type='sine'){
+  if(!this.ctx||this.ctx.state!=='running')return;
+  const t=this.ctx.currentTime+offset,osc=this.ctx.createOscillator(),gain=this.ctx.createGain();
+  osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.025);gain.gain.exponentialRampToValueAtTime(.0001,t+length);
+  osc.connect(gain);gain.connect(this.bus);osc.start(t);osc.stop(t+length+.02);
+ },
+ play(){
+  this.stop();if(!prefs.music||document.hidden)return;this.init();if(!this.ctx)return;
+  const tick=()=>{if(!prefs.music||document.hidden)return;
+   const chords=prefs.track==='calm'?[[130.81,164.81,196,246.94],[110,130.81,164.81,196],[87.31,130.81,174.61,220],[98,146.83,196,246.94]]:[[146.83,174.61,220,261.63],[98,146.83,196,246.94],[130.81,164.81,196,246.94],[110,164.81,220,261.63]];
+   const chord=chords[Math.floor(this.step/8)%4],n=this.step%8;
+   this.tone(chord[n%4]*(n%3===0?2:1),prefs.track==='calm'?1.8:1.15,0,.25);
+   if(n===0){this.tone(chord[0]/2,2.7,0,.45);chord.forEach(f=>this.tone(f,2.5,0,.06));}
+   this.step++;
+  };tick();this.interval=setInterval(tick,prefs.track==='calm'?660:440);
+ },
+ stop(){clearInterval(this.interval);this.interval=null;},
+ fx(kind){if(!prefs.effects)return;this.init();const notes=kind==='win'?[523.25,659.25,783.99,1046.5]:kind==='sequence'?[392,523.25,659.25]:kind==='remove'?[220,146.83]:[440,587.33];notes.forEach((f,i)=>this.tone(f,.28,i*.09,.45));}
+};
+function mini(){const tokens={11:0,22:0,33:0,44:0,55:0,25:1,35:1,45:1,65:1,73:0,81:1};$('mini-board').innerHTML=E.BOARD.map((c,i)=>'<span class="mini-cell '+(/[HD]$/.test(c)?'red ':'')+(c==='*'?'corner':'')+'">'+(c==='*'?'✦':E.label(c))+(tokens[i]!==undefined?'<i class="mini-token '+(tokens[i]?'g':'')+'"></i>':'')+'</span>').join('');}
+mini();$('start-music').checked=prefs.music;toggle('continue',!!saved());
+function initial(name){return name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();}
+function render(){
+ if(!state)return;
+ const p=state.players[state.turn],myTurn=state.turn===0&&state.phase==='play'&&!paused;
+ const card=state.hands[0][selected],legal=myTurn&&selected>=0?E.legal(state,card,0):[];
+ $('game-mode').textContent=(state.config.count===4?'DUPLAS · ':'DUELO · ')+({easy:'FÁCIL',medium:'MÉDIO',hard:'DIFÍCIL'}[state.config.difficulty]);
+ $('players').innerHTML=state.players.map((pl,i)=>'<div class="player '+(state.turn===i?'active':'')+'"><div class="avatar t'+pl.team+'">'+escapeHTML(initial(pl.name))+'</div><div><strong>'+escapeHTML(pl.name)+'</strong><small>'+(i===0?'Você':state.config.count===4?(pl.team===0?'Seu parceiro':'Adversário'):'Adversário')+(state.discards[i].length?' · '+E.label(state.discards[i].at(-1)):'')+'</small></div></div>').join('');
+ $('board').classList.toggle('selecting',legal.length>0);
+ $('board').innerHTML=E.BOARD.map((c,i)=>{
+  const owner=state.board[i],protectedChip=E.locked(state,i),r=Math.floor(i/10)+1,col=i%10+1;
+  const accessible='Linha '+r+', coluna '+col+': '+E.fullLabel(c)+(owner!==null?', ficha '+(owner===0?'da sua equipe':'adversária'):'')+(protectedChip?', protegida':'')+(legal.includes(i)?', jogada disponível':'');
+  return '<button type="button" class="cell '+(/[HD]$/.test(c)?'red ':'')+(c==='*'?'corner ':'')+(owner!==null?'occupied ':'')+(legal.includes(i)?'legal ':'')+(state.last?.index===i?'last':'')+'" data-cell="'+i+'" aria-label="'+accessible+'" aria-disabled="'+!legal.includes(i)+'">'+(c==='*'?'✦<small>LIVRE</small>':'<span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span>')+(owner!==null?'<span class="chip t'+owner+(protectedChip?' protected':'')+'">'+(protectedChip?'★':owner===0?'●':'◆')+'</span>':'')+'</button>';
+ }).join('');
+ $('score').innerHTML=[0,1].map(t=>'<div class="score-row"><span class="'+(t===0?'blue':'green')+'">'+(t===0?(state.config.count===4?'Sua dupla':'Você'):(state.config.count===4?'Dupla rival':escapeHTML(state.players[1].name)))+'</span><div class="score-dots" aria-label="'+state.sequences[t].length+' de 2 sequências">'+[0,1].map(n=>'<b class="score-dot '+(state.sequences[t].length>n?'filled':'')+'">'+(state.sequences[t].length>n?'★':'○')+'</b>').join('')+'</div></div>').join('');
+ $('deck-count').textContent=state.deck.length+' cartas';
+ $('history').innerHTML=state.log.map(l=>'<li>'+escapeHTML(l)+'</li>').join('');
+ $('hand-count').textContent=state.hands[0].length+' cartas';
+ $('hand').innerHTML=state.hands[0].map((c,i)=>'<button type="button" class="hand-card '+(/[HD]$/.test(c)?'red ':'')+(i===selected?'selected ':'')+(E.dead(state,c)?'dead':'')+'" data-card="'+i+'" aria-label="'+E.fullLabel(c)+(E.wild(c)?', colocar ficha':E.remove(c)?', remover ficha':E.dead(state,c)?', carta morta':'')+'" aria-pressed="'+(i===selected)+'" '+(!myTurn?'disabled':'')+'><span class="corner-rank">'+E.rank(c)+E.suits[E.suit(c)]+'</span><span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span><span class="card-tag">'+(E.wild(c)?'COLOCAR':E.remove(c)?'REMOVER':E.dead(state,c)?'MORTA':'')+'</span></button>').join('');
+ $('hand-title').textContent=myTurn?'Escolha sua próxima jogada':state.phase==='draw'&&state.turn===0?'Complete sua jogada':'Acompanhe a mesa';
+ $('turn-label').textContent=state.winner!==null?'PARTIDA ENCERRADA':paused?'PAUSA':state.turn===0?'SUA VEZ':'VEZ DE '+p.name.toUpperCase();
+ let title='Escolha uma carta',status='Depois, toque em uma casa iluminada para jogar.';
+ if(state.winner!==null){title=state.winner==='draw'?'Empate':state.winner===0?'Você venceu!':'Vitória dos adversários';status='A partida terminou. Comece outra quando quiser.';}
+ else if(paused){title='Partida pausada';status='O jogo continua de onde você parou.';}
+ else if(state.turn!==0){title=p.name+' está pensando';status='As cartas dos outros jogadores permanecem escondidas.';}
+ else if(state.phase==='draw'){title='Compre uma carta';status='Sua ficha foi jogada. Compre para repor a mão e encerrar a vez.';}
+ else if(selected>=0){
+  if(E.dead(state,card)){title='Carta morta';status=state.exchanged?'Você já trocou uma carta nesta vez. Escolha outra carta.':'As duas casas estão ocupadas. Você pode trocar uma carta morta por turno.';}
+  else if(E.remove(card)){title='Remova uma ficha';status=legal.length?'Escolha uma ficha adversária iluminada. Sequências completas são protegidas.':'Não há fichas adversárias que este valete possa remover.';}
+  else if(E.wild(card)){title='Escolha qualquer casa';status='Este valete coloca sua ficha em uma casa vazia.';}
+  else{title='Jogue '+E.label(card);status='Toque em uma das casas iluminadas do tabuleiro.';}
+ }
+ $('turn-title').textContent=title;$('status').textContent=status;
+ $('card-help').textContent=myTurn&&selected>=0?E.fullLabel(card)+' · '+status:state.turn===0&&state.phase==='draw'?'Clique em “Comprar carta” para terminar sua vez.':'Selecione uma carta para iluminar as casas disponíveis.';
+ toggle('draw',state.turn===0&&state.phase==='draw'&&!paused);
+ toggle('exchange',myTurn&&selected>=0&&E.dead(state,card)&&!state.exchanged);
+ const hasMove=state.hands[0].some(c=>E.legal(state,c,0).length),canExchange=!state.exchanged&&state.hands[0].some(c=>E.dead(state,c));
+ toggle('pass',myTurn&&!hasMove&&!canExchange);
+ if(myTurn&&!hasMove&&canExchange&&selected<0){$('turn-title').textContent='Troque uma carta morta';$('status').textContent='Selecione uma carta marcada como MORTA para tentar uma nova opção.';}
+ save();
+}
+function schedule(){
+ clearTimeout(timer);
+ if(!state||paused||state.winner!==null||state.turn===0||$('game').classList.contains('hidden'))return;
+ timer=setTimeout(botTurn,1100+Math.random()*550);
+}
+function afterMove(last){
+ log(state.players[last.player].name+(last.remove?' removeu uma ficha com ':' jogou ')+E.label(last.card)+'.'+(last.claims?' Formou '+last.claims+' sequência(s)!':''));
+ audio.fx(state.winner!==null?'win':last.claims?'sequence':last.remove?'remove':'place');
+ selected=-1;render();
+ if(state.winner!==null){storageRemove(SAVE);setTimeout(showResult,400);}
+}
+function botTurn(){
+ if(paused||!state||state.turn===0||state.winner!==null)return;
+ if(state.phase==='draw'){E.finish(state);render();schedule();return;}
+ const ci=state.hands[state.turn].findIndex(c=>E.dead(state,c));
+ if(ci>=0&&!state.exchanged){const c=E.exchange(state,ci);if(c)log(state.players[state.turn].name+' trocou uma carta morta ('+E.label(c)+').');}
+ const move=E.choose(state,state.config.difficulty);
+ if(move){const last=E.play(state,move.ci,move.i);afterMove(last);if(state.winner===null){timer=setTimeout(()=>{if(!paused){E.finish(state);render();schedule();}},600);}}
+ else{const name=state.players[state.turn].name;E.pass(state);log(name+' passou: nenhuma jogada disponível.');render();if(state.winner!==null)showResult();else schedule();}
+}
+function showGame(){toggle('home',false);toggle('game',true);toggle('pause',true);paused=false;selected=-1;render();schedule();window.scrollTo({top:0,behavior:'smooth'});}
+function start(config){clearTimeout(timer);state=E.create(config);log(state.players[state.dealer].name+' distribuiu as cartas. '+state.players[state.turn].name+' começa.');showGame();audio.init();audio.play();}
+$('setup').addEventListener('submit',e=>{
+ e.preventDefault();
+ const begin=()=>{prefs.music=$('start-music').checked;storageSet(SETTINGS,prefs);start({count:Number(new FormData($('setup')).get('mode')),difficulty:new FormData($('setup')).get('difficulty'),name:$('player-name').value.trim()||'Você',partner:$('companion').value,opponent:$('companion').value});};
+ if(saved()){showModal('<span class="eyebrow">NOVA PARTIDA</span><h2>Começar do zero?</h2><p>A partida salva será substituída.</p><div class="actions"><button class="primary" id="confirm-start">Começar nova partida</button><button class="secondary" id="keep-game">Continuar a salva</button></div>');$('confirm-start').onclick=()=>{closeModal();begin();};$('keep-game').onclick=()=>{closeModal();state=saved();showGame();audio.play();};}else begin();
+});
+document.querySelectorAll('input[name=mode]').forEach(el=>el.onchange=()=>{$('companion-label').textContent=el.value==='4'?'Seu parceiro de dupla':'Seu adversário';});
+document.querySelectorAll('input[name=difficulty]').forEach(el=>el.onchange=()=>{$('difficulty-info').textContent={easy:'Joga de forma descontraída e deixa oportunidades para você.',medium:'Forma sequências e procura bloquear suas jogadas.',hard:'Prioriza vitórias, bloqueios e ameaças em mais de uma direção.'}[el.value];});
+$('continue').onclick=()=>{state=saved();if(state){showGame();audio.play();}else{toggle('continue',false);toast('Não foi possível recuperar a partida.');}};
+$('hand').onclick=e=>{const b=e.target.closest('[data-card]');if(!b||state.turn!==0||state.phase!=='play'||paused)return;selected=Number(b.dataset.card);render();$('hand').querySelector('[data-card="'+selected+'"]')?.focus({preventScroll:true});};
+$('board').onclick=e=>{const b=e.target.closest('[data-cell]');if(!b||!state||paused||state.turn!==0||state.phase!=='play')return;if(selected<0){toast('Escolha primeiro uma carta da sua mão.');return;}const last=E.play(state,selected,Number(b.dataset.cell));if(last)afterMove(last);else toast('Essa casa não está disponível para a carta selecionada.');};
+$('draw').onclick=()=>{if(state?.turn===0&&E.finish(state)){selected=-1;audio.fx('place');render();schedule();}};
+$('exchange').onclick=()=>{const c=E.exchange(state,selected);if(c){log(state.players[0].name+' trocou uma carta morta ('+E.label(c)+').');selected=-1;render();toast('Carta trocada. Você ainda pode jogar nesta vez.');}};
+$('pass').onclick=()=>{if(E.pass(state)){log('Você passou: nenhuma jogada disponível.');selected=-1;render();if(state.winner!==null)showResult();else schedule();}};
+function showModal(html){paused=!!state;clearTimeout(timer);$('modal-content').innerHTML=html;if(!$('modal').open)$('modal').showModal();}
+function closeModal(){if($('modal').open)$('modal').close();paused=false;if(state&&!$('game').classList.contains('hidden')){render();schedule();}}
+$('close-modal').onclick=closeModal;
+$('modal').addEventListener('cancel',e=>{e.preventDefault();closeModal();});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal')){const r=$('modal').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal();}});
+function goHome(){save();clearTimeout(timer);paused=true;toggle('home',true);toggle('game',false);toggle('pause',false);toggle('continue',!!saved());$('modal').close();}
+$('brand').onclick=e=>{e.preventDefault();if(state&&!$('game').classList.contains('hidden'))pauseMenu();};
+function pauseMenu(){
+ if(!state)return;
+ showModal('<span class="eyebrow">RESPIRE. SUA MESA ESPERA.</span><h2>Partida pausada</h2><p>Seu progresso fica salvo neste navegador.</p><div class="actions"><button id="resume" class="primary">Voltar à partida</button><button id="go-home" class="secondary">Tela inicial</button><button id="restart" class="secondary">Recomeçar</button></div>');
+ $('resume').onclick=closeModal;$('go-home').onclick=goHome;$('restart').onclick=()=>{showModal('<h2>Recomeçar a partida?</h2><p>O progresso atual será substituído por uma nova distribuição de cartas.</p><div class="actions"><button class="primary" id="restart-yes">Sim, recomeçar</button><button class="secondary" id="restart-no">Voltar</button></div>');$('restart-no').onclick=pauseMenu;$('restart-yes').onclick=()=>{const config=state.config;closeModal();start(config);};};
+}
+$('pause').onclick=pauseMenu;
+function showResult(){
+ if(!state||state.winner===null)return;
+ const won=state.winner===0,draw=state.winner==='draw';
+ showModal('<div class="result"><div class="result-icon">'+(draw?'♧':won?'✦':'♠')+'</div><span class="eyebrow">FIM DE PARTIDA</span><h2>'+(draw?'Deu empate!':won?(state.config.count===4?'Sua dupla venceu!':'Você venceu!'):'Os adversários venceram')+'</h2><p>'+(draw?'Não há jogadas possíveis para os participantes.':'Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+' sequências.')+'<br>'+state.move+' jogadas na mesa.</p><div class="actions"><button class="primary" id="rematch">Jogar novamente</button><button class="secondary" id="result-home">Tela inicial</button></div></div>');
+ $('rematch').onclick=()=>{const config=state.config;closeModal();start(config);};$('result-home').onclick=goHome;
+}
+$('rules').onclick=()=>showModal(`<span class="eyebrow">GUIA DA MESA</span><h2>Como jogar</h2>
+<h3>O objetivo</h3><p>Conquiste <strong>duas sequências</strong> antes do adversário. Cada sequência tem cinco casas consecutivas da sua cor, na horizontal, vertical ou diagonal. Os quatro cantos são livres para ambas as equipes: ao usar um canto, bastam quatro fichas.</p>
+<h3>Duelo ou duplas</h3><p>No duelo, você enfrenta um bot e cada participante recebe sete cartas. Nas duplas, cada um recebe seis. Seu parceiro fica em frente a você e compartilha sua cor e pontuação. Os turnos alternam entre as equipes.</p>
+<h3>Sua vez, em três passos</h3><ol><li>Selecione uma carta da sua mão.</li><li>Coloque a ficha em uma casa vazia com a mesma carta. Cada carta comum aparece duas vezes.</li><li>Clique em <strong>Comprar carta</strong> para repor sua mão e passar a vez.</li></ol>
+<h3>Valetes de dois olhos · colocar</h3><div class="rule-cards"><span>J♣</span><span class="red">J♦</span></div><p>Paus e ouros permitem colocar uma ficha em qualquer casa vazia, exceto nos cantos.</p>
+<h3>Valetes de um olho · remover</h3><div class="rule-cards"><span>J♠</span><span class="red">J♥</span></div><p>Espadas e copas removem uma ficha adversária que não faça parte de uma sequência completa. A remoção é sua jogada: você não coloca outra ficha no lugar.</p>
+<h3>Cartas mortas e sequências</h3><p>Se as duas casas de uma carta comum estiverem ocupadas, ela é uma carta morta. Você pode trocar <strong>uma por turno</strong>, antes de jogar. Uma sequência completa fica protegida. A segunda pode compartilhar, no máximo, uma casa com a primeira; nove fichas em linha podem formar duas sequências.</p>
+<h3>O baralho e os bots</h3><p>São 104 cartas, sem curingas adicionais. Os descartes são reembaralhados quando o monte termina. A primeira vez é sorteada por meio da escolha de quem distribui. Os bots usam somente suas próprias cartas e o tabuleiro público, inclusive nas duplas.</p>
+<h3>Adaptações desta versão digital</h3><p>O jogo exige a compra antes de avançar, evitando a penalidade física por esquecer de comprar. Não há comunicação entre parceiros, então a penalidade por dar dicas não se aplica. Sequências são reconhecidas automaticamente. Sem jogada legal após a troca permitida, o jogador passa. Se todos ficarem sem jogadas e sem trocas possíveis, a partida empata. O jogo salva automaticamente neste navegador.</p>
+<p><a href="https://www.jaxgames.com/sequence-game-rules/" target="_blank" rel="noopener">Referência: regras da JAX</a>. Arte própria; adaptação independente, sem vínculo com a marca.</p>`);
+$('sound').onclick=()=>{
+ showModal('<span class="eyebrow">O CLIMA DA MESA</span><h2>Música e sons</h2><p>Trilhas instrumentais geradas pelo próprio jogo.</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música ambiente</label><label class="field">Trilha<select id="track"><option value="lounge">Noite na mesa</option><option value="calm">Concentração</option></select></label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos das jogadas</label><label class="field">Volume <span id="volume-value">'+prefs.volume+'%</span><input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="primary" id="sound-done">Pronto</button></div>');
+ $('track').value=prefs.track;
+ $('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};
+ $('track').onchange=e=>{prefs.track=e.target.value;storageSet(SETTINGS,prefs);audio.play();};
+ $('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);audio.fx('place');};
+ $('volume').oninput=e=>{prefs.volume=Number(e.target.value);$('volume-value').textContent=prefs.volume+'%';storageSet(SETTINGS,prefs);audio.init();};
+ $('sound-done').onclick=closeModal;
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();clearTimeout(timer);save();}else{audio.play();schedule();}});
+window.addEventListener('beforeunload',save);
+
+</script></body></html>

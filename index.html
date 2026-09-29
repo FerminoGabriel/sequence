@@ -30,9 +30,7 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 <div class="welcome"><span class="eyebrow">O BARALHO É SÉRIO. A FAMÍLIA, NEM TANTO.</span><h1>Todo mundo tem <br>uma <em>boa desculpa.</em></h1><p class="home-subtitle">Ganhar é bom. Ganhar da família rende assunto.</p><div id="family-lobby" class="family-lobby"></div><div id="lobby-quote" class="lobby-quote" aria-live="polite"></div></div>
 <form id="setup" class="setup panel">
 <div class="setup-heading"><span class="eyebrow">PUXE UMA CADEIRA</span><h2>Qual vai ser a resenha?</h2></div>
-<label class="field name-field">Seu nome<input id="player-name" maxlength="24" placeholder="Você" autocomplete="given-name"></label>
-<fieldset><legend>A mesa</legend><div class="segmented modes"><label><input type="radio" name="mode" value="2"><span><strong>Duelo</strong><small>Você + um bot</small></span></label><label><input type="radio" name="mode" value="4" checked><span><strong>Duplas</strong><small>Você + três bots</small></span></label></div></fieldset>
-<div class="setup-pair"><label class="field"><span id="companion-label">Seu parceiro ou parceira</span><select id="companion"><option>Iverson</option><option>Ana Paula</option><option selected>Gabriela</option><option>Gabriel</option></select></label><label class="field" id="bench-field">Fica na torcida<select id="bench"><option>Iverson</option><option selected>Ana Paula</option><option>Gabriela</option><option>Gabriel</option></select></label></div>
+<div class="setup-pair"><label class="field">Quem é você na mesa?<select id="character"><option>Iverson</option><option>Ana Paula</option><option>Gabriela</option><option selected>Gabriel</option></select></label><label class="field">Seu parceiro ou parceira<select id="companion"><option>Iverson</option><option>Ana Paula</option><option selected>Gabriela</option><option>Gabriel</option></select></label></div>
 <p id="lineup" class="lineup">A família já está escolhendo as desculpas.</p>
 <fieldset><legend>Quanto desafio?</legend><div class="segmented difficulty"><label><input type="radio" name="difficulty" value="easy"><span>Fácil</span></label><label><input type="radio" name="difficulty" value="medium" checked><span>Médio</span></label><label><input type="radio" name="difficulty" value="hard"><span>Difícil</span></label></div><p id="difficulty-info" class="muted field-help">Uma disputa boa, com tempo para provocar.</p></fieldset>
 <div class="setup-bottom"><label class="checkline"><input type="checkbox" id="start-music" checked> Música ambiente</label><span class="muted">♫</span></div>
@@ -78,11 +76,12 @@ function shuffle(a,rng=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.f
 function deck(){return Array.from({length:2},()=>['S','H','D','C'].flatMap(s=>['A','2','3','4','5','6','7','8','9','10','J','Q','K'].map(r=>r+s))).flat();}
 function create(config,rng=Math.random){
  const bots=['Iverson','Ana Paula','Gabriela','Gabriel'];
- const partner=bots.includes(config.partner)?config.partner:'Gabriela';
- const bench=bots.includes(config.bench)&&config.bench!==partner?config.bench:bots.find(n=>n!==partner);
- const rivals=bots.filter(n=>n!==partner&&n!==bench);
- const players=config.count===4?[{name:config.name||'Você',team:0},{name:rivals[0],team:1},{name:partner,team:0},{name:rivals[1],team:1}]:[{name:config.name||'Você',team:0},{name:bots.includes(config.opponent)?config.opponent:'Iverson',team:1}];
- const s={version:1,config,players,board:Array(100).fill(null),sequences:[[],[]],hands:players.map(()=>[]),deck:shuffle(deck(),rng),discards:players.map(()=>[]),turn:0,phase:'play',exchanged:false,winner:null,move:0,passes:0,last:null,log:[]};
+ const name=bots.includes(config.name)?config.name:'Gabriel';
+ const partner=bots.includes(config.partner)&&config.partner!==name?config.partner:bots.find(n=>n!==name);
+ const rivals=bots.filter(n=>n!==partner&&n!==name);
+ config={...config,count:4,name,partner};
+ const players=[{name,team:0},{name:rivals[0],team:1},{name:partner,team:0},{name:rivals[1],team:1}];
+ const s={version:2,config,players,board:Array(100).fill(null),sequences:[[],[]],hands:players.map(()=>[]),deck:shuffle(deck(),rng),discards:players.map(()=>[]),turn:0,phase:'play',exchanged:false,winner:null,move:0,passes:0,last:null,log:[]};
  players.forEach((_,p)=>{for(let i=0;i<(config.count===4?6:7);i++)s.hands[p].push(s.deck.pop());});
  s.dealer=Math.floor(rng()*players.length);s.turn=(s.dealer+1)%players.length;
  return s;
@@ -200,19 +199,19 @@ const Family = (() => {
  function avatar(name){
   const dad=name==='Iverson',mom=name==='Ana Paula',girl=name==='Gabriela',boy=name==='Gabriel',female=mom||girl,known=dad||female||boy;
   const bg=profiles[name]?.color||'#c4a96a',skin=boy?'#efc4a7':dad?'#f1c8b0':'#f9d7bc',iris=boy?'#583a2a':'#6c9873';
-  const hair=female?'#d9b666':dad?'#b5b9b6':'#45352d';
+  const hair=female?'#d9b666':dad?'#b5b9b6':'#141416';
   const back=female?'<path d="M30 114Q19 94 24 54Q27 15 62 13Q102 12 103 54L108 109Q96 125 80 113L37 119Z" fill="'+hair+'" stroke="#786143" stroke-width="2"/>':'';
   const head=boy?'M35 44Q33 29 63 27Q94 28 97 49L94 84Q91 111 64 115Q40 111 33 86Z':'M35 43Q34 24 64 23Q93 25 94 46L90 84Q85 111 64 116Q42 108 37 84Z';
-  const top=dad?'<path d="M33 64Q24 37 39 24Q45 19 48 20L43 38Q52 26 64 28Q78 27 85 40L79 19Q101 25 98 64L89 48Q80 35 63 37Q46 34 37 55Z" fill="#babdb8" stroke="#777d79" stroke-width="2"/><path d="M42 28L37 39M51 31L56 25M64 32L66 25M74 31L72 23M88 31L93 41" stroke="#e7e8df" stroke-width="3" stroke-linecap="round"/>':female?'<path d="M28 61Q25 20 59 15Q92 10 100 46L96 77L88 56Q78 48 72 32Q59 50 35 51L34 85Q24 78 28 61Z" fill="'+hair+'" stroke="#967649" stroke-width="2"/><path d="M35 44Q50 40 65 22M81 22Q89 33 90 43M27 65L29 104M98 78L102 103" fill="none" stroke="#f5dda0" stroke-width="4" stroke-linecap="round"/>':'<path d="M31 63Q23 35 36 22Q48 7 78 16Q102 19 100 50L94 65L88 44Q60 51 44 37L37 62Z" fill="'+hair+'" stroke="#2d2827" stroke-width="2"/><path d="M40 32Q65 19 85 29M45 37Q67 25 89 34M53 19Q67 14 78 20" fill="none" stroke="#795c42" stroke-width="3" stroke-linecap="round"/>';
+  const top=dad?'<path d="M34 66Q26 42 35 31Q39 25 44 24L40 50L36 68Z M88 25Q100 29 99 48L94 67L90 49Z" fill="#aeb3b0" stroke="#777d79" stroke-width="1.5"/><path d="M48 22Q64 14 80 22L76 30Q72 31 70 36L59 36Q57 29 52 29Z" fill="#b9bfba" stroke="#777d79" stroke-width="1.5"/><path d="M54 24L57 29M63 21L64 30M72 23L70 29M36 37L33 49M95 36L96 48" stroke="#e2e5df" stroke-width="2" stroke-linecap="round"/>':female?'<path d="M28 61Q25 20 59 15Q92 10 100 46L96 77L88 56Q78 48 72 32Q59 50 35 51L34 85Q24 78 28 61Z" fill="'+hair+'" stroke="#967649" stroke-width="2"/><path d="M35 44Q50 40 65 22M81 22Q89 33 90 43M27 65L29 104M98 78L102 103" fill="none" stroke="#f5dda0" stroke-width="4" stroke-linecap="round"/>':'<path d="M31 63Q23 35 36 22Q48 7 78 16Q102 19 100 50L94 65L88 44Q60 51 44 37L37 62Z" fill="'+hair+'" stroke="#2d2827" stroke-width="2"/><path d="M40 32Q65 19 85 29M45 37Q67 25 89 34M53 19Q67 14 78 20" fill="none" stroke="#38383d" stroke-width="3" stroke-linecap="round"/>';
   const eyes='<path d="M40 61Q48 54 56 60M72 60Q82 53 89 61" fill="none" stroke="#6d4e3c" stroke-width="3" stroke-linecap="round"/><ellipse cx="48" cy="68" rx="9" ry="7" fill="#fff9ed"/><ellipse cx="80" cy="68" rx="9" ry="7" fill="#fff9ed"/><ellipse cx="49" cy="68" rx="4.5" ry="5.5" fill="'+iris+'"/><ellipse cx="79" cy="68" rx="4.5" ry="5.5" fill="'+iris+'"/><circle cx="49" cy="69" r="2.4" fill="#202820"/><circle cx="79" cy="69" r="2.4" fill="#202820"/><circle cx="50" cy="66" r="1.5" fill="white"/><circle cx="80" cy="66" r="1.5" fill="white"/>';
   const glasses=mom?'<g fill="none" stroke="#4c414d" stroke-width="3"><rect x="35" y="59" width="25" height="19" rx="7"/><rect x="69" y="59" width="25" height="19" rx="7"/><path d="M60 65Q64 62 69 65M28 63L35 65M94 65L100 62"/></g>':'';
-  const beard=boy?'<path d="M34 77L42 88Q46 80 55 88Q63 84 72 88Q83 81 90 78L91 91Q81 110 64 111Q44 109 37 91Z" fill="#705440" opacity=".65"/><path d="M44 95L47 98M49 101L52 104M76 103L79 100M83 94L85 91" stroke="#45352d" stroke-width="1.3"/>':'';
+  const beard=boy?'<path d="M34 77L42 88Q46 80 55 88Q63 84 72 88Q83 81 90 78L91 91Q81 110 64 111Q44 109 37 91Z" fill="#171719" opacity=".88"/><path d="M44 95L47 98M49 101L52 104M76 103L79 100M83 94L85 91" stroke="#101013" stroke-width="1.3"/>':'';
   const mouth=boy?'<path d="M50 91Q63 85 77 91Q72 102 63 101Q54 101 50 91Z" fill="#bd786b"/><path d="M52 92Q63 95 75 92" stroke="#6c463c" stroke-width="1.5" fill="none"/>':'<path d="M49 91Q64 96 80 88Q73 104 63 103Q55 102 49 91Z" fill="#924d46"/><path d="M52 93Q64 96 76 91L73 96Q63 100 54 96Z" fill="#fff9e9"/>';
   const wrinkles=dad?'<path d="M48 46Q64 43 79 46M50 51Q64 48 76 51M36 75L41 77M88 77L93 74" fill="none" stroke="#c4967f" stroke-width="1.2"/>':'';
   if(!known)return '<svg viewBox="0 0 128 140" aria-hidden="true"><circle cx="64" cy="65" r="58" fill="#283347"/><path d="M23 133Q23 97 64 96Q105 97 105 133" fill="#d2ac62"/><path d="M38 53Q35 20 64 20Q95 23 91 56L85 82Q64 106 43 82Z" fill="#f3cfac"/><path d="M35 57Q23 30 46 19Q77 6 95 30L94 60L84 43Q56 51 46 37Z" fill="#453b3b"/><path d="M46 63L55 64M74 64L84 63M53 82Q65 90 77 80" fill="none" stroke="#5c4135" stroke-width="4" stroke-linecap="round"/><path d="M41 127L64 104L87 127" fill="#f6dfab"/></svg>';
   return '<svg viewBox="0 0 128 140" aria-hidden="true"><circle cx="64" cy="65" r="58" fill="'+bg+'"/><circle cx="64" cy="65" r="53" fill="none" stroke="#ffffff25"/>'+back+'<path d="M55 103L54 120Q64 128 75 120L73 102" fill="'+skin+'" stroke="#ad816a" stroke-width="1.4"/><path d="M21 140Q26 116 53 116Q64 128 76 116Q103 117 110 140" fill="'+(dad?'#284e49':mom?'#654768':girl?'#674174':'#31495d')+'"/><ellipse cx="34" cy="72" rx="8" ry="13" fill="'+skin+'"/><ellipse cx="95" cy="72" rx="7" ry="13" fill="'+skin+'"/><path d="'+head+'" fill="'+skin+'" stroke="#b2836e" stroke-width="1.8"/>'+top+wrinkles+eyes+'<path d="M63 70L59 83Q63 87 68 83" fill="none" stroke="#c18f73" stroke-width="2" stroke-linecap="round"/><ellipse cx="44" cy="82" rx="6" ry="3" fill="#eeb09b" opacity=".65"/><ellipse cx="85" cy="82" rx="5" ry="3" fill="#eeb09b" opacity=".65"/>'+beard+mouth+glasses+(female?'<circle cx="33" cy="86" r="3" fill="#f0d68b"/><circle cx="95" cy="86" r="3" fill="#f0d68b"/>':'')+'</svg>';
  }
- // 50 cenas: 24 falas individuais + 26 diálogos. Nunca usam cartas ou posições.
+ // 101 cenas, incluindo a frase exclusiva de Iverson. Nunca usam cartas ou posições.
  const scenes=[
  [['Iverson','Agora vou fazer a maldade. Com respeito, claro.']],
  [['Iverson','Tá na vez de quem? Perguntando por um pai distraído.']],
@@ -269,25 +268,147 @@ const Family = (() => {
  [['Ana Paula','Iverson, não assusta o menino.'],['Iverson','Tô acolhendo. Com bastante competitividade.']],
  [['Gabriel','Posso chamar todo mundo para a revanche?'],['Iverson','Pode, rapaz. Agora você já é da família.'],['Gabriela','Viu, amor? Já ganhou a carteirinha da família.']]
  ];
+ scenes.push(
+ [['Iverson','Está valendo a honra! E o direito de comentar essa vitória no almoço de domingo.']],
+ [['Gabriel','Senhor Iverson, posso pedir tempo técnico?'],['Iverson','Pode. Mas não dá tempo de fazer faculdade de Sequence.']],
+ [['Gabriel','Senhora Ana Paula, o baralho vem com garantia?'],['Ana Paula','Vem. Garante que alguém vai reclamar da mão.']],
+ [['Gabriel','Princesa, se eu fechar os olhos melhora a sorte?'],['Gabriela','Melhora a minha, porque você para de olhar o tabuleiro.']],
+ [['Gabriela','Pai, o senhor tá fazendo conta?'],['Iverson','Sim. Quantas vezes vou contar que ganhei.']],
+ [['Gabriela','Mãe, a senhora percebe tudo mesmo?'],['Ana Paula','Inclusive quem abriu a geladeira e não fechou direito.']],
+ [['Iverson','Quem pegou meu carregador?'],['Gabriel','Senhor, eu só peguei experiência. E pouca.']],
+ [['Ana Paula','Esse café já esfriou.'],['Gabriela','Mãe, a disputa tá quente. Deixa equilibrar.']],
+ [['Gabriel','Duas sequências dão direito a sobremesa?'],['Ana Paula','Sobremesa tem para todos. Repetir depende da louça.']],
+ [['Gabriel','Princesa, o rei manda na rainha?'],['Gabriela','Aqui em casa? Tenta perguntar para minha mãe.']],
+ [['Iverson','Eu estava quase ganhando.'],['Ana Paula','Você fala isso até antes de distribuir as cartas.']],
+ [['Gabriela','Senhor Iverson, o senhor ensaiou essa cara de mistério?'],['Iverson','São 47 anos olhando boleto.']],
+ [['Gabriel','Senhora, pode usar calculadora?'],['Ana Paula','Para contar até cinco? Vou deixar você pensar.']],
+ [['Gabriel','Princesa, eu sou seu amuleto da sorte?'],['Gabriela','É meu amor. Amuleto ainda está em avaliação.']],
+ [['Ana Paula','Iverson, não vale dar discurso em toda rodada.'],['Iverson','Isso é uma coletiva de imprensa.']],
+ [['Gabriela','Pai, vamos tirar uma foto da mesa?'],['Iverson','Espera eu fazer uma cara de campeão.']],
+ [['Gabriel','Senhor, diagonal é aquela linha meio deitada?'],['Iverson','Meio deitada e meio em pé. Igual eu no sofá.']],
+ [['Ana Paula','Gabriel, quer mais um pedaço de bolo?'],['Gabriel','Quero, senhora. Pelo menos no bolo eu avanço.']],
+ [['Gabriela','Mãe, a senhora guardou o manual?'],['Ana Paula','Guardei. Agora preciso de um manual para achar onde.']],
+ [['Iverson','Essa cadeira tá dando azar.'],['Ana Paula','Na outra rodada o culpado era o café.']],
+ [['Gabriel','Princesa, posso fazer uma pergunta rápida?'],['Gabriela','Pode, amor. A resposta depende do tamanho da invenção.']],
+ [['Gabriel','Senhor, sequência tem plural?'],['Iverson','Tem. E é disso que a gente precisa: duas.']],
+ [['Gabriela','Pai, o senhor ficou quieto de repente.'],['Iverson','Estou economizando argumento para depois.']],
+ [['Ana Paula','Quem colocou pote vazio na geladeira?'],['Gabriel','Senhora, posso alegar que sou visitante?'],['Gabriela','Amor, essa licença já venceu.']],
+ [['Gabriel','Princesa, eu tenho potencial?'],['Gabriela','Muito. Agora vamos transformar em jogada.']],
+ [['Iverson','Hoje eu acordei inspirado.'],['Ana Paula','Acordou procurando a chave que estava no bolso.']],
+ [['Gabriela','Mãe, promete não contar se eu perder?'],['Ana Paula','Contar eu não conto. Mando um áudio.']],
+ [['Gabriel','Senhora, o curinga tirou folga?'],['Ana Paula','Aqui não tem curinga extra. O valete já trabalha bastante.']],
+ [['Iverson','Gabriel, tá gostando da família?'],['Gabriel','Muito, senhor. Só a banca examinadora que é forte.']],
+ [['Gabriela','Princesa merece uma vitória, né?'],['Gabriel','Merece, Princesa. Mas vou tentar merecer uma também.']],
+ [['Ana Paula','Alguém está com fome?'],['Iverson','De vitória. E de pão de queijo.']],
+ [['Gabriel','Senhor, posso devolver uma carta que não combinou comigo?'],['Iverson','Isso é baralho, rapaz. Não é provador.']],
+ [['Gabriela','Pai, cadê aquela sua tranquilidade?'],['Iverson','Ficou na tela inicial.']],
+ [['Gabriel','Senhora, o placar aceita arredondamento?'],['Ana Paula','Aceita certinho. Zero continua zero.']],
+ [['Gabriela','Mãe, a senhora vai querer revanche?'],['Ana Paula','Vou querer outra partida. Revanche depende do resultado.']],
+ [['Iverson','Vou só alongar os dedos.'],['Gabriel','Senhor, agora fiquei preocupado com o nível profissional.']],
+ [['Gabriel','Princesa, dá para treinar no modo avião?'],['Gabriela','Dá para começar prestando atenção, amor.']],
+ [['Ana Paula','A família toda reunida. Que paz!'],['Iverson','Espera alguém bloquear uma ficha.']],
+ [['Gabriela','Pai, isso é concentração ou teimosia?'],['Iverson','A diferença está no resultado.']],
+ [['Gabriel','Senhora, se eu perder com educação conta ponto?'],['Ana Paula','Conta ponto comigo. No tabuleiro, não.']],
+ [['Iverson','Amanhã tem compromisso cedo.'],['Gabriela','Então o senhor não vai pedir mais três revanches?'],['Iverson','Vamos analisar caso a caso.']],
+ [['Gabriel','Princesa, você explica tão bem as regras.'],['Gabriela','Obrigada. Agora falta você lembrar entre uma rodada e outra.']],
+ [['Ana Paula','Quem terminar primeiro ajuda a guardar.'],['Iverson','Olha aí uma razão para pensar com calma.']],
+ [['Gabriela','Senhora Ana Paula, essa risadinha entrega tudo.'],['Ana Paula','Minha filha, é só lembrança de coisa boa. Talvez futura.']],
+ [['Gabriel','Senhor, existe estágio supervisionado de Sequence?'],['Iverson','Existe. Você entrou nele quando sentou aqui.']],
+ [['Iverson','Eu não reclamo. Faço observações técnicas.']],
+ [['Ana Paula','Já conferi: ninguém ganha imunidade da louça hoje.']],
+ [['Gabriela','Minha paciência é grande. Minha vontade de ganhar também.']],
+ [['Gabriel','Eu conto até cinco direitinho. Meu problema é convencer as fichas.']],
+ [['Gabriel','Princesa, posso comemorar uma jogada normal?'],['Gabriela','Pode, amor. Só deixa o discurso de agradecimento para o final.']]
+ );
  return {names,profiles,avatar,scenes};
+})();
+</script><script>/* Melodias em domínio público; síntese e acompanhamento próprios.
+ * ASSURANCE: Phoebe P. Knapp, 1873 (1839–1908), Harpa 140.
+ * BETHANY: Lowell Mason, 1856 (1792–1872), Harpa 187.
+ * Sem letras, gravações comerciais ou arranjos modernos copiados.
+ * Fontes e enquadramento: MUSIC-CREDITS.md.
+ */
+const Hymns=(()=>{
+ const parse=s=>s.trim().split(/\s+/).map(t=>t.split(':').map(Number));
+ const tracks={
+  assurance:{beat:.30,bar:9,tonic:50,chords:[0,0,7,0,0,7,7,7,0,0,0,0,5,0,7,0],notes:parse(`
+   66:1 64:1 62:1 69:3 69:3 67:1 69:1 71:1 69:6 69:1 66:1 69:1
+   74:3 73:2 73:1 71:1 69:1 68:1 69:6
+   66:1 64:1 62:1 69:3 69:3 67:1 69:1 71:1 69:6 62:1 64:1 66:1
+   67:3 64:3 62:1 64:1 61:1 62:6
+   69:1 69:1 69:1 74:3 69:3 71:1 71:1 71:1 69:6 69:1 69:1 69:1
+   71:3 74:3 73:1 73:1 71:1 73:6
+   73:1 74:1 76:1 74:3 69:3 71:1 69:1 71:1 69:6 62:1 64:1 66:1
+   67:3 64:3 62:1.5 64:.5 61:1 62:6 0:6`)},
+  bethany:{beat:.68,bar:4,tonic:53,chords:[0,5,0,7,0,5,7,0,0,5,0,7,0,5,7,0],notes:parse(`
+   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:2 65:1 69:1 67:4
+   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:1 65:1 64:1 67:1 65:4
+   72:2 74:1 72:1 72:1.5 69:.5 72:2 72:2 74:1 72:1 72:1.5 69:.5 67:2
+   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:1 65:1 64:1 67:1 65:4 0:4`)}
+ };
+ const cache=new Map();
+ function url(key){
+  if(cache.has(key))return cache.get(key);
+  const song=tracks[key]||tracks.assurance,rate=22050;
+  const length=song.notes.reduce((n,x)=>n+x[1],0)*song.beat;
+  const samples=new Float32Array(Math.ceil((length+1)*rate));
+  function note(midi,start,seconds,amp){
+   if(!midi)return;
+   const freq=440*2**((midi-69)/12),begin=Math.floor(start*rate),count=Math.min(Math.floor((seconds+.35)*rate),samples.length-begin);
+   for(let i=0;i<count;i++){
+    const t=i/rate,attack=Math.min(1,t/.018),release=Math.max(0,Math.min(1,(seconds+.35-t)/.38));
+    const envelope=attack*release*Math.exp(-t/Math.max(.35,seconds*.85));
+    const phase=2*Math.PI*freq*t;
+    samples[begin+i]+=amp*envelope*(Math.sin(phase)+.19*Math.sin(phase*2)*Math.exp(-t*3)+.06*Math.sin(phase*3)*Math.exp(-t*5));
+   }
+  }
+  let time=.04;
+  for(const [pitch,duration] of song.notes){note(pitch,time,duration*song.beat*.95,.26);time+=duration*song.beat;}
+  // Acompanhamento arpejado próprio; a melodia permanece em primeiro plano.
+  const bars=Math.ceil((length-song.beat*4)/(song.bar*song.beat));
+  for(let bar=0;bar<bars;bar++){
+   const root=song.tonic+song.chords[bar%song.chords.length],start=bar*song.bar*song.beat;
+   note(root-12,start,song.bar*song.beat,.10);
+   const triad=[root,root+4,root+7,root+12];
+   for(let j=0;j<song.bar;j++)note(triad[j%4],start+j*song.beat,song.beat*2,.055);
+  }
+  const data=new ArrayBuffer(44+samples.length*2),view=new DataView(data);
+  const text=(offset,s)=>{for(let i=0;i<s.length;i++)view.setUint8(offset+i,s.charCodeAt(i));};
+  text(0,'RIFF');view.setUint32(4,36+samples.length*2,true);text(8,'WAVE');text(12,'fmt ');
+  view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);
+  view.setUint32(24,rate,true);view.setUint32(28,rate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);
+  text(36,'data');view.setUint32(40,samples.length*2,true);
+  for(let i=0;i<samples.length;i++)view.setInt16(44+i*2,Math.max(-1,Math.min(1,samples[i]))*32767,true);
+  const result=URL.createObjectURL(new Blob([data],{type:'audio/wav'}));cache.set(key,result);return result;
+ }
+ return {url};
 })();
 </script><script>'use strict';
 const E=Sequence,$=id=>document.getElementById(id);
 let state=null,selected=-1,timer=null,paused=false,toastTimer;
-const SAVE='sequence-noite-v1',SETTINGS='sequence-audio-v1';
-let prefs={music:true,effects:true,volume:35,track:'lounge',banter:true};
+const SAVE='sequence-familia-v2',SETTINGS='sequence-audio-v1';
+let prefs={music:true,effects:true,volume:35,track:'assurance',banter:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
+if(!['assurance','bethany'].includes(prefs.track))prefs.track='assurance';
 function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 function storageRemove(k){try{localStorage.removeItem(k);}catch{}}
-function saved(){try{const x=JSON.parse(localStorage.getItem(SAVE)||'null');return x&&x.version===1&&x.board?.length===100&&Array.isArray(x.hands)&&x.players?.length===x.hands.length&&x.winner===null?x:null;}catch{return null;}}
+function saved(){try{const x=JSON.parse(localStorage.getItem(SAVE)||'null');return x&&x.version===2&&x.board?.length===100&&Array.isArray(x.hands)&&x.players?.length===x.hands.length&&x.winner===null?x:null;}catch{return null;}}
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2800);}
 function save(){if(state?.winner===null)storageSet(SAVE,state);}
 function log(text){state.log.unshift(text);state.log=state.log.slice(0,35);}
 function toggle(id,visible){$(id).classList.toggle('hidden',!visible);}
 const audio={
- ctx:null,bus:null,interval:null,step:0,
- init(){try{if(!this.ctx){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);}this.ctx.resume();this.bus.gain.setTargetAtTime(prefs.volume/100*.25,this.ctx.currentTime,.05);}catch{}},
+ ctx:null,bus:null,player:null,track:null,blocked:false,
+ init(){
+  try{
+   if(navigator.audioSession)navigator.audioSession.type='playback';
+   if(!this.ctx||this.ctx.state==='closed'){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);}
+   if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
+   this.bus.gain.setTargetAtTime(prefs.volume/100*.25,this.ctx.currentTime,.05);
+   if(this.player)this.player.volume=prefs.volume/100;
+  }catch{}
+ },
  tone(freq,length=.3,offset=0,volume=.3,type='sine'){
   if(!this.ctx||this.ctx.state!=='running')return;
   const t=this.ctx.currentTime+offset,osc=this.ctx.createOscillator(),gain=this.ctx.createGain();
@@ -295,18 +416,33 @@ const audio={
   osc.connect(gain);gain.connect(this.bus);osc.start(t);osc.stop(t+length+.02);
  },
  play(){
-  this.stop();if(!prefs.music||document.hidden)return;this.init();if(!this.ctx)return;
-  const tick=()=>{if(!prefs.music||document.hidden)return;
-   const chords=prefs.track==='calm'?[[130.81,164.81,196,246.94],[110,130.81,164.81,196],[87.31,130.81,174.61,220],[98,146.83,196,246.94]]:[[146.83,174.61,220,261.63],[98,146.83,196,246.94],[130.81,164.81,196,246.94],[110,164.81,220,261.63]];
-   const chord=chords[Math.floor(this.step/8)%4],n=this.step%8;
-   this.tone(chord[n%4]*(n%3===0?2:1),prefs.track==='calm'?1.8:1.15,0,.25);
-   if(n===0){this.tone(chord[0]/2,2.7,0,.45);chord.forEach(f=>this.tone(f,2.5,0,.06));}
-   this.step++;
-  };tick();this.interval=setInterval(tick,prefs.track==='calm'?660:440);
+  if(!prefs.music||document.hidden){this.stop();return;}
+  try{
+   if(navigator.audioSession)navigator.audioSession.type='playback';
+   if(!this.player){
+    this.player=new Audio();this.player.loop=true;this.player.preload='auto';
+    this.player.setAttribute('playsinline','');
+   }
+   if(this.track!==prefs.track){this.player.src=Hymns.url(prefs.track);this.track=prefs.track;}
+   this.player.volume=prefs.volume/100;
+   // Chamada direta a partir do toque: respeita o desbloqueio de mídia no iOS/Android.
+   this.player.play().then(()=>{this.blocked=false;}).catch(()=>{
+    this.blocked=true;
+    if(prefs.music&&!document.hidden)toast('Toque em ♫ Som → Ativar áudio para ouvir a música.');
+   });
+  }catch{this.blocked=true;}
  },
- stop(){clearInterval(this.interval);this.interval=null;},
+ stop(){if(this.player)this.player.pause();},
  fx(kind){if(!prefs.effects)return;this.init();const notes=kind==='win'?[523.25,659.25,783.99,1046.5]:kind==='sequence'?[392,523.25,659.25]:kind==='remove'?[220,146.83]:[440,587.33];notes.forEach((f,i)=>this.tone(f,.28,i*.09,.45));}
 };
+// Reativa áudio interrompido por bloqueio da tela, chamada ou política de reprodução.
+function unlockAudio(){
+ audio.init();
+ if(prefs.music&&!document.hidden&&(!audio.player||audio.player.paused))audio.play();
+}
+document.addEventListener('pointerup',unlockAudio,{passive:true});
+document.addEventListener('touchend',unlockAudio,{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')unlockAudio();});
 const portrait=name=>'<span class="portrait">'+Family.avatar(name)+'</span>';
 let chatTimer=null,chatGeneration=0,sceneBag=[],lobbyIndex=0,currentSpeaker='';
 function fitTable(){
@@ -337,17 +473,16 @@ window.addEventListener('resize',queueFit);
 window.visualViewport?.addEventListener('resize',queueFit);
 new ResizeObserver(queueFit).observe($('arena'));
 function updateLineup(){
- const duo=document.querySelector('input[name=mode]:checked').value==='4';
- $('companion-label').textContent=duo?'Seu parceiro ou parceira':'Seu adversário ou adversária';
- toggle('bench-field',duo);
- for(const op of $('bench').options)op.disabled=op.value===$('companion').value;
- if($('bench').value===$('companion').value)$('bench').value=Family.names.find(n=>n!==$('companion').value);
- const rivals=Family.names.filter(n=>n!==$('companion').value&&n!==$('bench').value);
- $('lineup').textContent=duo?'Rivais: '+rivals.join(' + ')+'. A torcida também tem opinião.':'O resto da família fica na torcida. E na resenha.';
+ const name=$('character').value;
+ for(const op of $('companion').options)op.disabled=op.value===name;
+ if($('companion').value===name)$('companion').value=Family.names.find(n=>n!==name);
+ const rivals=Family.names.filter(n=>n!==name&&n!==$('companion').value);
+ $('lineup').textContent='Você: '+name+' · Sua dupla: '+$('companion').value+'. Rivais: '+rivals.join(' + ')+'.';
+ renderLobby();
 }
 function renderLobby(){
  const name=Family.names[lobbyIndex%Family.names.length];
- $('family-lobby').innerHTML=Family.names.map(n=>'<div class="lobby-person '+(n===name?'active':'')+'" data-intro="'+n+'">'+portrait(n)+'<strong>'+n+'</strong><small>'+Family.profiles[n].role+'</small></div>').join('');
+ $('family-lobby').innerHTML=Family.names.map(n=>'<div class="lobby-person '+(n===$('character').value?'active':'')+'" data-intro="'+n+'">'+portrait(n)+'<strong>'+n+'</strong><small>'+Family.profiles[n].role+'</small></div>').join('');
  $('lobby-quote').innerHTML='<b>'+name+':</b> “'+Family.profiles[name].intro+'”';
 }
 function clearSpeech(){
@@ -362,16 +497,17 @@ function nextChat(delay=6000+Math.random()*5000){
  const generation=chatGeneration;
  chatTimer=setTimeout(()=>{
   if(generation!==chatGeneration||!talkAllowed())return;
-  if($('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(6500);return;}
+  if($('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}
   if(!sceneBag.length)sceneBag=Family.scenes.map((_,i)=>i).sort(()=>Math.random()-.5);
   const scene=Family.scenes[sceneBag.pop()];
   function line(i){
    if(generation!==chatGeneration||!talkAllowed())return;
    const [name,text]=scene[i];currentSpeaker=name;
-   const playing=state.players.slice(1).some(p=>p.name===name);
-   $('conversation').innerHTML='<span class="speech-head portrait">'+Family.avatar(name)+'</span><div class="speech-bubble"><b>'+name+'</b>'+(!playing?'<span class="speaker-role">na torcida</span>':'')+'<span>'+escapeHTML(text)+'</span></div>';
+   const playing=state.players.some(p=>p.name===name);
+   const controlled=state.players[0].name===name;
+   $('conversation').innerHTML='<span class="speech-head portrait">'+Family.avatar(name)+'</span><div class="speech-bubble"><b>'+name+'</b>'+(controlled?'<span class="speaker-role">seu personagem</span>':!playing?'<span class="speaker-role">na torcida</span>':'')+'<span>'+escapeHTML(text)+'</span></div>';
    document.querySelectorAll('[data-speaker]').forEach(el=>el.classList.toggle('speaking',el.dataset.speaker===name));
-   const reading=Math.min(6500,Math.max(4200,text.length*48));
+   const reading=2*Math.min(6500,Math.max(4200,text.length*48));
    chatTimer=setTimeout(()=>{clearSpeech();if(i+1<scene.length){chatTimer=setTimeout(()=>line(i+1),700);}else nextChat(3500+Math.random()*4500);},reading);
   }
   line(0);
@@ -382,20 +518,23 @@ function renderPeople(){
   const female=pl.name==='Ana Paula'||pl.name==='Gabriela';
   const role=i===0?'Você':pl.team===0?(female?'Sua parceira':'Seu parceiro'):(female?'Adversária':'Adversário');
   const last=state.discards[i].at(-1);
-  return '<div class="player '+pos+' t'+pl.team+(state.turn===i?' active':'')+(currentSpeaker===pl.name?' speaking':'')+'" data-speaker="'+escapeHTML(pl.name)+'">'+portrait(i===0?'Você':pl.name)+'<div class="nameplate"><strong><span class="team-mark">'+(pl.team===0?'●':'◆')+'</span>'+escapeHTML(pl.name)+'</strong><small>'+role+(state.turn===i?' · sua vez':'')+'</small>'+(last?'<span class="last-card" title="Última carta: '+E.fullLabel(last)+'">'+E.label(last)+'</span>':'')+(state.turn===i&&i>0&&state.phase==='play'?'<span class="turn-progress"><i></i></span>':'')+'</div></div>';
+  return '<div class="player '+pos+' t'+pl.team+(state.turn===i?' active':'')+(currentSpeaker===pl.name?' speaking':'')+'" data-speaker="'+escapeHTML(pl.name)+'">'+portrait(pl.name)+'<div class="nameplate"><strong><span class="team-mark">'+(pl.team===0?'●':'◆')+'</span>'+escapeHTML(pl.name)+'</strong><small>'+role+(state.turn===i?' · sua vez':'')+'</small>'+(last?'<span class="last-card" title="Última carta: '+E.fullLabel(last)+'">'+E.label(last)+'</span>':'')+(state.turn===i&&i>0&&state.phase==='play'?'<span class="turn-progress"><i></i></span>':'')+'</div></div>';
  };
  $('players').innerHTML=state.players.slice(1).map((pl,k)=>seat(pl,k+1,state.players.length===2?'seat-top':k===0?'seat-left':k===1?'seat-top':'seat-right')).join('');
  $('human-seat').className='human-seat t0'+(state.turn===0?' active':'');
- $('human-seat').innerHTML=portrait('Você')+'<div class="nameplate"><strong>'+escapeHTML(state.players[0].name)+'</strong><small><span class="team-mark">●</span>Sua equipe</small></div>';
- const absent=Family.names.filter(n=>!state.players.slice(1).some(p=>p.name===n));
+ $('human-seat').dataset.speaker=state.players[0].name;
+ $('human-seat').classList.toggle('speaking',currentSpeaker===state.players[0].name);
+ $('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+escapeHTML(state.players[0].name)+'</strong><small><span class="team-mark">●</span>Sua equipe</small></div>';
+ const absent=Family.names.filter(n=>!state.players.some(p=>p.name===n));
  $('spectators').innerHTML=absent.map(n=>'<div class="spectator '+(currentSpeaker===n?'speaking':'')+'" data-speaker="'+n+'" title="'+n+' · na torcida">'+portrait(n)+'<span>Torcida</span></div>').join('');
 }
 $('start-music').checked=prefs.music;toggle('continue',!!saved());
+$('start-music').onchange=e=>{prefs.music=e.target.checked;storageSet(SETTINGS,prefs);audio.play();};
 $('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));
 $('banter-toggle').onclick=()=>{prefs.banter=!prefs.banter;storageSet(SETTINGS,prefs);$('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));stopChat();if(prefs.banter)nextChat(1500);toast(prefs.banter?'A resenha voltou!':'Conversas silenciadas.');};
-$('family-lobby').onclick=e=>{const person=e.target.closest('[data-intro]');if(person){lobbyIndex=Family.names.indexOf(person.dataset.intro);renderLobby();}};
+$('family-lobby').onclick=e=>{const person=e.target.closest('[data-intro]');if(person){lobbyIndex=Family.names.indexOf(person.dataset.intro);$('character').value=person.dataset.intro;updateLineup();}};
 $('history-button').onclick=()=>showModal('<span class="eyebrow">O QUE ACONTECEU NA MESA</span><h2>Últimas jogadas</h2><ol>'+state.log.map(l=>'<li>'+escapeHTML(l)+'</li>').join('')+'</ol>');
-$('companion').onchange=updateLineup;$('bench').onchange=updateLineup;
+$('companion').onchange=updateLineup;$('character').onchange=updateLineup;
 updateLineup();renderLobby();fitTable();nextChat();
 function initial(name){return name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();}
 function render(){
@@ -461,13 +600,13 @@ function showGame(){stopChat();toggle('home',false);toggle('game',true);toggle('
 function start(config){clearTimeout(timer);state=E.create(config);log(state.players[state.dealer].name+' distribuiu as cartas. '+state.players[state.turn].name+' começa.');showGame();audio.init();audio.play();}
 $('setup').addEventListener('submit',e=>{
  e.preventDefault();
- const begin=()=>{prefs.music=$('start-music').checked;storageSet(SETTINGS,prefs);start({count:Number(new FormData($('setup')).get('mode')),difficulty:new FormData($('setup')).get('difficulty'),name:$('player-name').value.trim()||'Você',partner:$('companion').value,opponent:$('companion').value,bench:$('bench').value});};
+ const begin=()=>{prefs.music=$('start-music').checked;storageSet(SETTINGS,prefs);start({count:4,difficulty:new FormData($('setup')).get('difficulty'),name:$('character').value,partner:$('companion').value});};
  if(saved()){showModal('<span class="eyebrow">NOVA PARTIDA</span><h2>Começar do zero?</h2><p>A partida salva será substituída.</p><div class="actions"><button class="primary" id="confirm-start">Começar nova partida</button><button class="secondary" id="keep-game">Continuar a salva</button></div>');$('confirm-start').onclick=()=>{closeModal();begin();};$('keep-game').onclick=()=>{closeModal();state=saved();showGame();audio.play();};}else begin();
 });
-document.querySelectorAll('input[name=mode]').forEach(el=>el.onchange=updateLineup);
+
 document.querySelectorAll('input[name=difficulty]').forEach(el=>el.onchange=()=>{$('difficulty-info').textContent={easy:'Joga de forma descontraída e deixa oportunidades para você.',medium:'Forma sequências e procura bloquear suas jogadas.',hard:'Prioriza vitórias, bloqueios e ameaças em mais de uma direção.'}[el.value];});
 $('continue').onclick=()=>{state=saved();if(state){showGame();audio.play();}else{toggle('continue',false);toast('Não foi possível recuperar a partida.');}};
-$('hand').onclick=e=>{const b=e.target.closest('[data-card]');if(!b||state.turn!==0||state.phase!=='play'||paused)return;selected=Number(b.dataset.card);render();$('hand').querySelector('[data-card="'+selected+'"]')?.focus({preventScroll:true});};
+$('hand').onclick=e=>{const b=e.target.closest('[data-card]');if(!b||state.turn!==0||state.phase!=='play'||paused)return;const index=Number(b.dataset.card);selected=selected===index?-1:index;render();$('hand').querySelector('[data-card="'+index+'"]')?.focus({preventScroll:true});};
 $('board').onclick=e=>{const b=e.target.closest('[data-cell]');if(!b||!state||paused||state.turn!==0||state.phase!=='play')return;if(selected<0){toast('Escolha primeiro uma carta da sua mão.');return;}const last=E.play(state,selected,Number(b.dataset.cell));if(last)afterMove(last);else toast('Essa casa não está disponível para a carta selecionada.');};
 $('draw').onclick=()=>{if(state?.turn===0&&E.finish(state)){selected=-1;audio.fx('place');render();schedule();}};
 $('exchange').onclick=()=>{const c=E.exchange(state,selected);if(c){log(state.players[0].name+' trocou uma carta morta ('+E.label(c)+').');selected=-1;render();toast('Carta trocada. Você ainda pode jogar nesta vez.');}};
@@ -493,22 +632,25 @@ function showResult(){
 }
 $('rules').onclick=()=>showModal(`<span class="eyebrow">GUIA DA MESA</span><h2>Como jogar</h2>
 <h3>O objetivo</h3><p>Conquiste <strong>duas sequências</strong> antes do adversário. Cada sequência tem cinco casas consecutivas da sua cor, na horizontal, vertical ou diagonal. Os quatro cantos são livres para ambas as equipes: ao usar um canto, bastam quatro fichas.</p>
-<h3>Duelo ou duplas</h3><p>No duelo, você enfrenta um bot e cada participante recebe sete cartas. Nas duplas, cada um recebe seis. Seu parceiro fica em frente a você e compartilha sua cor e pontuação. Os turnos alternam entre as equipes.</p>
+<h3>Quatro personagens, duas duplas</h3><p>Você controla um dos quatro personagens e escolhe seu parceiro. Os outros dois são adversários. Cada participante recebe seis cartas. Seu parceiro fica em frente a você e compartilha sua cor e pontuação. Os turnos alternam entre as equipes.</p>
 <h3>Sua vez, em três passos</h3><ol><li>Selecione uma carta da sua mão.</li><li>Coloque a ficha em uma casa vazia com a mesma carta. Cada carta comum aparece duas vezes.</li><li>Clique em <strong>Comprar carta</strong> para repor sua mão e passar a vez.</li></ol>
 <h3>Valetes de dois olhos · colocar</h3><div class="rule-cards"><span>J♣</span><span class="red">J♦</span></div><p>Paus e ouros permitem colocar uma ficha em qualquer casa vazia, exceto nos cantos.</p>
 <h3>Valetes de um olho · remover</h3><div class="rule-cards"><span>J♠</span><span class="red">J♥</span></div><p>Espadas e copas removem uma ficha adversária que não faça parte de uma sequência completa. A remoção é sua jogada: você não coloca outra ficha no lugar.</p>
 <h3>Cartas mortas e sequências</h3><p>Se as duas casas de uma carta comum estiverem ocupadas, ela é uma carta morta. Você pode trocar <strong>uma por turno</strong>, antes de jogar. Uma sequência completa fica protegida. A segunda pode compartilhar, no máximo, uma casa com a primeira; nove fichas em linha podem formar duas sequências.</p>
 <h3>O baralho e os bots</h3><p>São 104 cartas, sem curingas adicionais. Os descartes são reembaralhados quando o monte termina. A primeira vez é sorteada por meio da escolha de quem distribui. Os bots usam somente suas próprias cartas e o tabuleiro público, inclusive nas duplas.</p>
-<h3>A família e a resenha</h3><p>Escolha entre Iverson, Ana Paula, Gabriela e Gabriel. No duelo, três ficam na torcida; nas duplas, um fica de fora. Todos participam das conversas. São 50 cenas aleatórias, com respostas entre os personagens. As falas são apenas humor: não revelam cartas nem orientam jogadas. Use “Resenha” para silenciá-las. Os bots levam cerca de cinco segundos para jogar.</p>
+<h3>A família e a resenha</h3><p>Escolha entre Iverson, Ana Paula, Gabriela e Gabriel. Os quatro estão sempre na mesa. As falas do seu personagem são automáticas; as jogadas dele são suas. São 101 cenas aleatórias, com respostas entre os personagens. As falas são apenas humor: não revelam cartas nem orientam jogadas. Use “Resenha” para silenciá-las. Os bots levam cerca de cinco segundos para jogar.</p>
 <h3>Adaptações desta versão digital</h3><p>O jogo exige a compra antes de avançar, evitando a penalidade física por esquecer de comprar. Não há dicas de estratégia entre parceiros. Sequências são reconhecidas automaticamente. Sem jogada legal após a troca permitida, o jogador passa. Se todos ficarem sem jogadas e sem trocas possíveis, a partida empata. O jogo salva automaticamente neste navegador.</p>
 <p><a href="https://www.jaxgames.com/sequence-game-rules/" target="_blank" rel="noopener">Referência: regras da JAX</a>. Arte própria; adaptação independente, sem vínculo com a marca.</p>`);
 $('sound').onclick=()=>{
- showModal('<span class="eyebrow">O CLIMA DA MESA</span><h2>Música e sons</h2><p>Trilhas instrumentais geradas pelo próprio jogo.</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música ambiente</label><label class="field">Trilha<select id="track"><option value="lounge">Noite na mesa</option><option value="calm">Concentração</option></select></label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos das jogadas</label><label class="field">Volume <span id="volume-value">'+prefs.volume+'%</span><input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="primary" id="sound-done">Pronto</button></div>');
+ audio.init();
+ showModal('<span class="eyebrow">O CLIMA DA MESA</span><h2>Música e sons</h2><p>Harpa Cristã instrumental, com timbres suaves e acompanhamento próprio. Toque em “Ativar áudio” se o celular interromper o som.</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música ambiente</label><label class="field">Trilha<select id="track"><option value="assurance">140 · A Segurança do Crente</option><option value="bethany">187 · Mais Perto, Meu Deus, de Ti</option></select></label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos das jogadas</label><label class="field">Volume <span id="volume-value">'+prefs.volume+'%</span><input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="primary" id="sound-done">Pronto</button></div>');
+ $('modal-content').insertAdjacentHTML('beforeend','<details><summary>Créditos das músicas</summary><p>Harpa 140: ASSURANCE, Phoebe P. Knapp (1839–1908), 1873. Harpa 187: BETHANY, Lowell Mason (1792–1872), 1856. Melodias originais em domínio público no Brasil; acompanhamento e síntese próprios, sem letras ou gravações de terceiros.</p><p><a href="https://www.hymnologyarchive.com/blessed-assurance" target="_blank" rel="noopener">ASSURANCE</a> · <a href="https://library.timelesstruths.org/music/Nearer_My_God_to_Thee/" target="_blank" rel="noopener">BETHANY</a> · <a href="https://www.planalto.gov.br/ccivil_03/leis/l9610.htm" target="_blank" rel="noopener">Lei 9.610, art. 41</a></p></details>');
  $('track').value=prefs.track;
  $('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};
  $('track').onchange=e=>{prefs.track=e.target.value;storageSet(SETTINGS,prefs);audio.play();};
  $('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);audio.fx('place');};
  $('volume').oninput=e=>{prefs.volume=Number(e.target.value);$('volume-value').textContent=prefs.volume+'%';storageSet(SETTINGS,prefs);audio.init();};
+ $('audio-unlock').onclick=()=>{audio.init();audio.play();};
  $('sound-done').onclick=closeModal;
 };
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();clearTimeout(timer);stopChat();save();}else{audio.play();schedule();nextChat();queueFit();}});

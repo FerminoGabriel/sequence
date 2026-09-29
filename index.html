@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="pt-BR"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#10141e"><meta name="description" content="Sequence em família: Iverson, Ana Paula, Gabriela e Gabriel. Uma mesa, muitas resenhas e duas sequências para vencer.">
-<title>Sequence · A mesa da família</title>
+<meta name="theme-color" content="#10141e"><meta name="description" content="Noite de Jogos: Sequence e Phase 10 com a família, salas on-line, bots e chat.">
+<title>Noite de Jogos · A família tem lugar marcado</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310141e'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-size='48' fill='%23e8bd74'%3E♠%3C/text%3E%3C/svg%3E">
 <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap');
 :root{color-scheme:dark;--bg:#10141e;--panel:#1b2332;--text:#f9f2e4;--muted:#a9b3c4;--gold:#e8bd74;--blue:#69bfff;--green:#79dca9;--red:#b53147;--app-height:100dvh;--board-size:400px;--card-w:62px;--card-h:87px;--card-step:46px}
@@ -24,6 +24,17 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 
 /* Salas e chat: painel sobreposto, sem aumentar a altura da mesa. */
 .online-actions{display:flex;justify-content:space-between;margin-top:5px}.lobby-person.taken{opacity:.7}.lobby-person{cursor:pointer}#online-status{color:var(--gold);margin:0 0 8px}#room-chat{width:min(450px,calc(100% - 18px));height:min(540px,80dvh);padding:16px}#room-chat[open]{display:flex;flex-direction:column;gap:8px}.chat-heading{display:flex;align-items:center;justify-content:space-between}.chat-heading strong{color:var(--gold)}#room-chat .chat-help{font-size:11px;margin:0;line-height:1.4;color:var(--muted)}#chat-messages{flex:1;min-height:0;overflow:auto;border:1px solid #ffffff18;border-radius:8px;padding:10px}#chat-messages p{font-size:13px;line-height:1.45;margin:0 0 9px;overflow-wrap:anywhere}#chat-messages strong{color:var(--gold)}#chat-form{display:flex;gap:6px;flex-shrink:0}#chat-input{flex:1;min-width:0;font-size:16px}#chat-form button{padding:8px 11px;font-size:12px}#chat-status{font-size:11px;min-height:14px;margin:0}#room-chat-button{color:var(--gold)}@media(max-width:600px){.topbar nav .quiet{padding:7px 4px;font-size:9px}.online-actions .quiet{font-size:10px}.online-actions{margin-top:2px}#online-status{font-size:9px;margin-bottom:5px}.brand small{display:none}}
+/* Noite de Jogos — portal, balões e chat sempre à mão. */
+.night-game .conversation{display:none}.night-game .topbar{flex-shrink:0}.night-game .brand{font-size:12px;letter-spacing:1.5px}.night-game .brand small{font-size:6px}.night-game .game{padding-bottom:4px}
+#room-chat{position:relative;display:flex;flex-direction:column;flex:0 0 auto;width:100%;max-width:1500px;height:auto;margin:0 auto;padding:4px 20px 7px;background:#111722;border:0;border-top:1px solid #ffffff15;border-radius:0;color:var(--text)}
+#chat-messages{display:flex;flex-direction:column;justify-content:flex-end;flex:none;height:32px;max-height:32px;overflow:auto;border:0;padding:0 3px;margin-bottom:3px;scrollbar-width:thin}#chat-messages p{margin:0;font-size:10px;line-height:15px;overflow-wrap:anywhere}#chat-messages .chat-help{font-size:10px;color:var(--muted)}#chat-form{display:flex;align-items:center;gap:8px}#chat-title{font-size:9px;color:var(--gold);min-width:64px}#chat-input{height:32px;padding:4px 9px;font-size:16px;background:#1b2432;border:1px solid #ffffff18;border-radius:8px}#chat-form button{font-size:11px;padding:7px 11px;box-shadow:none}#chat-status{min-height:0;font-size:10px;margin:0}#chat-status:empty{display:none}
+#speech-layer{position:fixed;inset:0;pointer-events:none;z-index:15}.avatar-speech{position:absolute;width:max-content;max-width:min(230px,58vw);padding:9px 12px;border-radius:13px;background:#f4eddf;color:#292f38;box-shadow:0 5px 20px #0005;font-size:12px;line-height:1.35;overflow-wrap:anywhere;animation:bubble-in .18s ease-out}.avatar-speech:after{content:'';position:absolute;top:100%;left:var(--tail,50%);border:7px solid transparent;border-top-color:#f4eddf;transform:translateX(-50%)}.avatar-speech b{display:block;font-size:9px;color:#846341;margin-bottom:3px}.avatar-speech span{display:block}.avatar-speech.human-message{background:#dbf4ff;border:1px solid #a6ddf4}.avatar-speech.human-message:after{border-top-color:#dbf4ff}.avatar-speech.human-message b{color:#28617d}@keyframes bubble-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.night-hub{height:100%;max-width:1100px;margin:auto;display:flex;flex-direction:column;justify-content:center;gap:17px;padding:20px 35px;position:relative}.hub-body{background:radial-gradient(ellipse at 15% 20%,#37416e66,transparent 45%),radial-gradient(ellipse at 90% 75%,#6c463a44,transparent 45%),#10131e}.hub-intro{text-align:center}.hub-intro h1{font:500 clamp(32px,5vw,64px)/1.1 'Playfair Display',Georgia,serif;margin:10px 0}.hub-intro h1 em{color:var(--gold)}.hub-intro p{color:var(--muted);font-size:13px;margin:9px 0}.game-choices{display:grid;grid-template-columns:1fr 1fr;gap:24px}.game-choice{border:1px solid #ffffff20;border-radius:22px;display:grid;grid-template-columns:42% 58%;min-height:225px;background:linear-gradient(130deg,#273647bb,#18232bdd);text-decoration:none;color:var(--text);overflow:hidden;transition:transform .2s,border-color .2s;box-shadow:0 14px 45px #0003}.game-choice:hover{transform:translateY(-4px);border-color:var(--gold)}.phase-choice{background:linear-gradient(130deg,#493341bb,#252032dd)}.choice-art{display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(circle,#ffffff0b,transparent 65%)}.mini-board{width:135px;aspect-ratio:1;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:#38404a;border:6px solid #b78e5d;border-radius:9px;transform:rotate(-12deg);box-shadow:8px 12px 15px #0005}.mini-board i{background:#e6dfce;color:#283a41;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:14px;font-style:normal}.mini-board .gold-chip{background:#ddb266;color:#614524;border-radius:50%}.mini-board .blue-chip{background:#699fba;border-radius:50%;color:#284853}.choice-copy{padding:26px 20px 24px 2px;align-self:center}.choice-copy h2{font:500 34px 'Playfair Display',Georgia,serif;margin:7px 0 10px}.choice-copy p{font-size:12px;line-height:1.6;color:#c4c6d0}.choice-enter{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ffffff18;margin-top:17px;padding-top:12px;color:var(--gold);font-size:12px;font-weight:700}.choice-enter b{font-size:23px}.show-card{position:absolute;display:grid;place-items:center;width:69px;height:104px;border:5px solid #eee2d1;border-radius:9px;font-size:43px;font-weight:700;color:white;box-shadow:4px 6px 12px #0005}.sc-red{background:#b64155;transform:translate(-34px,3px) rotate(-24deg)}.sc-blue{background:#337caa;transform:translate(-13px,-7px) rotate(-9deg)}.sc-gold{background:#bc8830;transform:translate(13px,-5px) rotate(7deg)}.sc-green{background:#397e70;transform:translate(35px,9px) rotate(23deg)}.hub-family{display:flex;justify-content:center;align-items:center;gap:12px}.hub-family>div{width:64px;text-align:center}.hub-family svg{width:64px;height:70px}.hub-family span{font-size:9px;color:var(--muted)}.hub-family p{font-size:11px;color:var(--muted);line-height:1.6;margin-left:12px}.hub-family strong{color:var(--gold);font-weight:500}.hub-foot{text-align:center;font-size:10px;letter-spacing:1px;color:#8e9aaf;margin:0}
+#phase-goal{color:var(--gold);font-size:12px;text-align:center;margin:2px 0 5px;flex:0 0 auto}.phase-game .arena{min-height:120px}.phase-game .felt{inset:25px 4% 0}.phase-game .deck-info{display:none}.phase-game #phase-table{position:absolute;left:20%;right:20%;top:78px;bottom:5px;display:flex;flex-direction:column;gap:7px;overflow:hidden}.phase-game .player .portrait{width:70px;height:77px}.phase-game .player.seat-top .portrait{width:45px;height:49px}.phase-game .player.seat-top .nameplate{min-width:120px}.phase-game .player.seat-left{left:3%;top:35%}.phase-game .player.seat-right{right:3%;top:35%}#phase-piles{display:flex;align-items:center;justify-content:center;gap:12px;flex:0 0 auto}.pile-button{background:none;color:var(--muted);padding:0;display:flex;flex-direction:column;align-items:center;gap:3px}.pile-button>small{font-size:9px}.p-card{display:inline-flex;position:relative;flex-direction:column;align-items:center;justify-content:center;width:47px;height:65px;border:3px solid #f6eddd;border-radius:6px;box-shadow:1px 2px 4px #0004;color:#fff;background:#555;font:700 29px 'DM Sans',sans-serif}.p-card small{position:absolute;top:1px;left:3px;font-size:10px}.pc-R{background:#af384c}.pc-B{background:#276b9e}.pc-G{background:#28715e}.pc-Y{background:#a87812}.pc-W{background:conic-gradient(#b24c65,#a87a1c,#347566,#3776a1,#b24c65)}.pc-S{background:#404861}.p-back{background:repeating-linear-gradient(45deg,#37324d,#37324d 4px,#48415e 4px,#48415e 6px);color:var(--gold)}.phase-round-label{display:flex;flex-direction:column;gap:4px;max-width:170px;color:var(--muted);font-size:10px}.phase-round-label b{font-size:11px;letter-spacing:1px;color:var(--gold)}#phase-melds{display:flex;flex:1;min-height:0;flex-direction:column;gap:4px;overflow:auto;scrollbar-width:thin}.meld-row{display:flex;align-items:center;min-height:43px;flex:1;background:#07141255;border:1px solid #ffffff10;border-radius:8px;padding:3px 7px;gap:7px}.meld-row>strong{font-size:10px;min-width:65px;max-width:65px}.meld-row strong small{display:block;color:var(--gold);font-size:8px}.meld-groups{display:flex;gap:8px;min-width:0;flex:1;overflow-x:auto;scrollbar-width:thin}.meld-group{display:flex;align-items:center;padding:3px 2px;background:transparent;border-radius:5px;flex:0 0 auto}.meld-group:not(:disabled){outline:1px solid var(--gold)}.meld-group:disabled{opacity:1}.p-card.mini{width:22px;height:32px;font-size:16px;border-width:1px;border-radius:3px;margin-left:-4px}.p-card.mini:first-child{margin-left:0}.p-card.mini small{font-size:5px;left:1px;top:0}.empty-phase{font-size:9px;color:#92aba3}.phase-hand{padding:0!important;background:transparent!important;border:0!important}.phase-hand>.p-card{width:100%;height:100%;font-size:32px}.phase-game .turn-actions{gap:5px}.phase-game .turn-actions button{padding:9px;font-size:11px}.phase-game .turn-copy{max-width:55%}
+@media(max-width:850px){.game-choice{grid-template-columns:36% 64%;min-height:190px}.mini-board{width:95px;gap:2px;border-width:4px}.show-card{width:46px;height:73px;font-size:28px;border-width:3px}.sc-red{transform:translate(-23px,3px) rotate(-24deg)}.sc-blue{transform:translate(-8px,-5px) rotate(-9deg)}.sc-gold{transform:translate(8px,-5px) rotate(7deg)}.sc-green{transform:translate(23px,9px) rotate(23deg)}.choice-copy h2{font-size:27px}.choice-copy .eyebrow{font-size:7px}.choice-copy p{font-size:10px}.phase-game #phase-table{left:17%;right:17%}.phase-game .player.seat-left{left:0}.phase-game .player.seat-right{right:0}}
+@media(max-width:600px) and (orientation:portrait){#room-chat{padding:3px 7px 5px}#chat-messages{height:27px;max-height:27px}#chat-messages p{font-size:9px;line-height:13px}#chat-title{display:none}#chat-input{height:31px}#chat-form button{font-size:10px;padding:7px}.avatar-speech{max-width:52vw;font-size:10px;padding:7px 9px}.avatar-speech b{font-size:8px}.night-game .brand{font-size:9px;letter-spacing:.6px}.night-hub{gap:12px;padding:14px 18px}.hub-intro h1{font-size:39px;margin:9px 0}.hub-intro>.eyebrow{font-size:7px;letter-spacing:1px}.hub-intro p{font-size:11px;max-width:280px;margin:8px auto}.game-choices{grid-template-columns:1fr;gap:12px}.game-choice{grid-template-columns:36% 64%;min-height:145px}.choice-copy{padding:14px 19px 14px 0}.choice-copy h2{font-size:27px;margin:4px 0}.choice-copy p{margin:5px 0}.choice-enter{margin-top:7px;padding-top:7px;font-size:10px}.choice-enter b{font-size:17px}.hub-family{gap:5px}.hub-family>div{width:49px}.hub-family svg{width:49px;height:54px}.hub-family span{font-size:8px}.hub-family p{font-size:8px;margin-left:4px}.hub-foot{font-size:8px}.phase-game #phase-table{left:0;right:0;top:76px;bottom:0;gap:4px}.phase-game .player{width:90px}.phase-game .player.seat-left{left:calc(17% - 45px);top:0}.phase-game .player.seat-right{right:calc(17% - 45px);top:0}.phase-game .player .portrait,.phase-game .player.seat-top .portrait{width:34px;height:37px}.phase-game .player.seat-top .nameplate{min-width:81px}.phase-game .nameplate small{font-size:6px}#phase-piles{gap:8px}.p-card{width:32px;height:43px;font-size:21px}.phase-round-label{font-size:8px;max-width:145px}.phase-round-label b{font-size:9px}.pile-button>small{font-size:7px}.meld-row{min-height:33px;padding:2px 5px;gap:4px}.meld-row>strong{font-size:8px;min-width:54px;max-width:54px}.p-card.mini{width:18px;height:25px;font-size:13px;margin-left:-5px}.empty-phase{font-size:8px}.meld-groups{gap:6px}.phase-hand>.p-card{font-size:26px}#phase-goal{font-size:10px;margin:1px 0 3px}.phase-game .turn-actions{flex-wrap:wrap;justify-content:flex-end;max-width:55%}.phase-game .turn-actions button{padding:6px;font-size:8px}.phase-game .turn-copy{max-width:45%}.phase-game .hand-dock{height:85px;flex-basis:85px}.phase-game .hand{height:75px}.phase-game .action-bar{min-height:48px;flex-basis:48px}.phase-game .turn-copy p{font-size:8px}.phase-game .turn-copy strong{font-size:9px}}
+@media(max-height:720px) and (orientation:portrait){.night-hub{gap:8px;padding:9px 17px}.hub-intro h1{font-size:31px}.hub-intro p{font-size:10px}.game-choice{min-height:127px}.choice-copy{padding-top:10px;padding-bottom:10px}.hub-family svg{width:38px;height:42px}.hub-family>div{width:40px}.phase-game #phase-table{top:65px}.phase-game .player .portrait,.phase-game .player.seat-top .portrait{width:28px;height:31px}.phase-game .hand-dock{height:73px;flex-basis:73px}.phase-game .hand{height:65px}.phase-game .hand-card{height:58px}.phase-game .p-card.mini{height:21px;width:15px;font-size:11px}.phase-game .meld-row{min-height:27px}}
+@media(orientation:landscape) and (max-height:620px){#room-chat{padding:2px 12px 3px}#chat-messages{height:14px;max-height:14px}#chat-input{height:27px}#chat-form button{padding:5px 8px}.night-hub{gap:7px;padding:8px 25px}.hub-intro h1{font-size:29px;margin:3px 0}.hub-intro p{margin:3px}.hub-intro>.eyebrow,.hub-family,.hub-foot{display:none}.game-choice{min-height:158px}.choice-copy{padding-top:12px;padding-bottom:12px}.phase-game #phase-table{top:5px;left:23%;right:23%;flex-direction:row;gap:8px}.phase-game #phase-piles{flex-direction:column;gap:3px}.phase-round-label{display:none}.phase-game #phase-melds{height:100%}.phase-game .player.seat-top{left:10px;top:0!important;transform:none}.phase-game .player.seat-left{left:10px;top:auto!important;bottom:0}.phase-game .player.seat-right{right:10px;top:30%!important}.phase-game .player .portrait,.phase-game .player.seat-top .portrait{width:29px;height:32px}.phase-game .player.seat-top .nameplate{min-width:80px}.phase-game .p-card{width:26px;height:35px;font-size:19px}.phase-game .p-card.mini{width:16px;height:24px;font-size:12px;margin-left:-5px}.phase-game .meld-row{min-height:28px;padding:1px 4px}.phase-game .meld-row>strong{min-width:43px;max-width:43px;font-size:7px}.phase-game .empty-phase{font-size:7px}.phase-game .meld-groups{gap:4px}.phase-game .hand-card>.p-card{width:100%;height:100%}.phase-game .hand-dock{height:61px;flex-basis:61px}.phase-game .hand{height:55px}.phase-game .turn-actions button{padding:6px;font-size:9px}#phase-goal{font-size:9px;margin:0}.avatar-speech{font-size:10px;max-width:210px}.phase-game .arena{min-height:60px}}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head><body>
@@ -49,7 +60,8 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 <ol id="history" class="hidden"></ol>
 </section></main>
 <dialog id="modal"><button class="close quiet" id="close-modal" aria-label="Fechar">×</button><div id="modal-content"></div></dialog><div id="toast" class="toast" role="status"></div>
-<script>window.addEventListener("DOMContentLoaded",()=>{const ONLINE_CONFIG={url:'https://efkdyiluikmntsqhqibw.supabase.co',key:'sb_publishable_cxnobPYZYmUU7_tmP4foWQ_hhPKkfsV'};
+<script>window.addEventListener("DOMContentLoaded",()=>{
+const ONLINE_CONFIG={url:'https://efkdyiluikmntsqhqibw.supabase.co',key:'sb_publishable_cxnobPYZYmUU7_tmP4foWQ_hhPKkfsV'};
 
 /* Sequence: rules and bot engine. No network or dependencies. */
 (function(root){
@@ -193,6 +205,40 @@ if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Sequ
 })(typeof window!=='undefined'?window:globalThis);
 
 
+/* Regras de Phase 10. Motor compartilhado pelo navegador e pelo servidor. */
+(function(root){
+'use strict';
+const names=['Iverson','Ana Paula','Gabriela','Gabriel'];
+const phases=[[['set',3],['set',3]],[['set',3],['run',4]],[['set',4],['run',4]],[['run',7]],[['run',8]],[['run',9]],[['set',4],['set',4]],[['color',7]],[['set',5],['set',2]],[['set',5],['set',3]];
+const descriptions=['2 trincas','1 trinca + sequência de 4','1 quadra + sequência de 4','Sequência de 7','Sequência de 8','Sequência de 9','2 quadras','7 cartas da mesma cor','5 iguais + 2 iguais','5 iguais + 3 iguais'];
+const num=c=>Number(c.slice(1)),wild=c=>c==='W',skip=c=>c==='S';
+const label=c=>c==='W'?'Curinga':c==='S'?'Pular':({R:'Vermelho',B:'Azul',G:'Verde',Y:'Amarelo'}[c[0]]+' '+num(c));
+const points=c=>wild(c)?25:skip(c)?15:num(c)>9?10:5;
+function shuffle(a,rng){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function deck(rng){const a=[];for(const color of ['R','B','G','Y'])for(let n=1;n<=12;n++)a.push(color+n,color+n);return shuffle(a.concat(Array(8).fill('W'),Array(4).fill('S')),rng);}
+function record(s,text){s.log.unshift(text);s.log=s.log.slice(0,40);}
+function active(s,i){return !s.tiebreak||s.tiebreak.includes(i);}
+function next(s,i){do{i=(i+1)%4;}while(!active(s,i));return i;}
+function advance(s){s.turn=next(s,s.turn);let guard=0;while(s.skips[s.turn]&&guard++<4){s.skips[s.turn]=false;s.pile.push('S');record(s,s.players[s.turn].name+' pulou a vez.');s.turn=next(s,s.turn);}s.phase='draw';}
+function deal(s,rng){s.deck=deck(rng);s.hands=[[],[],[],[]];s.laid=[[],[],[],[]];s.skips=[false,false,false,false];for(let n=0;n<10;n++)for(let p=0;p<4;p++)if(active(s,p))s.hands[p].push(s.deck.pop());s.pile=[s.deck.pop()];s.turn=next(s,s.dealer);s.phase='draw';if(skip(s.pile[0])){record(s,s.players[s.turn].name+' começa pulando a vez.');s.turn=next(s,s.turn);}s.move++;}
+function create(config={},rng=Math.random){const own=names.includes(config.name)?config.name:'Gabriel',players=[own,...names.filter(n=>n!==own)].map((name,i)=>({name,team:i}));const s={kind:'phase10',version:1,config,players,dealer:Math.floor(rng()*4),turn:0,phase:'draw',round:1,progress:[1,1,1,1],scores:[0,0,0,0],winner:null,tiebreak:null,log:[],last:null,move:0,roundResult:null};deal(s,rng);record(s,'Rodada 1. Todo mundo começa na fase 1.');return s;}
+function requireTurn(s,stage){if(s.winner!==null||s.phase!==stage)throw Error(stage==='draw'?'Compre apenas uma carta no início da vez.':'Compre uma carta antes de jogar.');}
+function draw(s,source='deck',rng=Math.random){requireTurn(s,'draw');let c;if(source==='discard'){c=s.pile.at(-1);if(!c||skip(c))throw Error('A carta Pular não pode ser comprada do descarte.');s.pile.pop();}else if(source==='deck'){if(!s.deck.length){const top=s.pile.pop();s.deck=shuffle(s.pile,rng);s.pile=top?[top]:[];}if(!s.deck.length)throw Error('O monte está vazio; compre o descarte.');c=s.deck.pop();}else throw Error('Monte inválido.');s.hands[s.turn].push(c);s.phase='play';s.move++;s.last={player:s.turn,type:'draw'};return true;}
+function shape(cards,kind){if(!cards.length||cards.some(skip))return null;const naturals=cards.filter(c=>!wild(c)),values=naturals.map(num);if(kind==='set'){if(new Set(values).size>1)return null;return {kind,cards:cards.slice(),value:values[0]||1};}if(kind==='color'){if(new Set(naturals.map(c=>c[0])).size>1)return null;return {kind,cards:cards.slice(),color:naturals[0]?.[0]||'R'};}if(kind==='run'){if(new Set(values).size!==values.length||cards.length>12)return null;const min=values.length?Math.min(...values):1,max=values.length?Math.max(...values):1;const lo=Math.max(1,max-cards.length+1);if(lo>min||lo+cards.length-1>12)return null;const remaining=cards.slice(),ordered=[];for(let v=lo;v<lo+cards.length;v++){let i=remaining.findIndex(c=>!wild(c)&&num(c)===v);if(i<0)i=remaining.indexOf('W');if(i<0)return null;ordered.push(remaining.splice(i,1)[0]);}return {kind,cards:ordered,lo,hi:lo+cards.length-1};}return null;}
+function options(hand,kind,count,allowed){const result=[];function walk(start,ids){if(ids.length===count){const meld=shape(ids.map(i=>hand[i]),kind);if(meld)result.push({ids,mask:ids.reduce((m,i)=>m|1<<i,0),meld});return;}for(let i=start;i<hand.length;i++)if(!skip(hand[i])&&(!allowed||allowed.has(i)))walk(i+1,[...ids,i]);}walk(0,[]);return result.sort((a,b)=>a.ids.filter(i=>wild(hand[i])).length-b.ids.filter(i=>wild(hand[i])).length);}
+function findPhase(hand,phase,selected=null){const spec=phases[Math.min(10,phase)-1],allowed=selected?new Set(selected):null;if(!spec)return null;const groups=spec.map(([k,n])=>options(hand,k,n,allowed));let found=null;function visit(i,mask,parts){if(found)return;if(i===groups.length){const ids=parts.flatMap(x=>x.ids);if(ids.some(j=>!wild(hand[j]))&&(!selected||ids.length===selected.length))found=parts;return;}for(const op of groups[i])if(!(op.mask&mask))visit(i+1,mask|op.mask,[...parts,op]);}visit(0,0,[]);return found;}
+function endRound(s){if(s.hands[s.turn].length)return;const winner=s.turn,penalties=s.hands.map(h=>h.reduce((a,c)=>a+points(c),0)),completed=s.laid.map(m=>m.length>0);s.scores=s.scores.map((v,i)=>v+penalties[i]);if(s.tiebreak)s.winner=winner;else{const finish=[];completed.forEach((yes,i)=>{if(yes){if(s.progress[i]===10)finish.push(i);else s.progress[i]++;}});if(finish.length){const min=Math.min(...finish.map(i=>s.scores[i])),ties=finish.filter(i=>s.scores[i]===min);if(ties.length===1)s.winner=ties[0];else s.tiebreak=ties;}}s.roundResult={winner,penalties,completed};s.phase=s.winner===null?'round':'over';record(s,s.players[winner].name+' bateu! Rodada '+s.round+' encerrada.');s.move++;}
+function lay(s,ids){requireTurn(s,'play');if(s.laid[s.turn].length)throw Error('Você já baixou sua fase nesta rodada.');if(ids&&(!Array.isArray(ids)||new Set(ids).size!==ids.length||ids.some(i=>!Number.isInteger(i)||i<0||i>=s.hands[s.turn].length)))throw Error('Seleção inválida.');const found=findPhase(s.hands[s.turn],s.progress[s.turn],ids);if(!found)throw Error('Essas cartas ainda não completam sua fase.');const used=new Set(found.flatMap(x=>x.ids));s.laid[s.turn]=found.map(x=>x.meld);s.hands[s.turn]=s.hands[s.turn].filter((_,i)=>!used.has(i));record(s,s.players[s.turn].name+' baixou a fase '+s.progress[s.turn]+'.');s.last={player:s.turn,type:'lay'};s.move++;endRound(s);return true;}
+function extend(m,c,side='end'){if(skip(c))return null;const n=structuredClone(m);if(m.kind==='set'){if(!wild(c)&&num(c)!==m.value)return null;n.cards.push(c);}else if(m.kind==='color'){if(!wild(c)&&c[0]!==m.color)return null;n.cards.push(c);}else{if(side==='start'){if(m.lo<=1||(!wild(c)&&num(c)!==m.lo-1))return null;n.lo--;n.cards.unshift(c);}else{if(m.hi>=12||(!wild(c)&&num(c)!==m.hi+1))return null;n.hi++;n.cards.push(c);}}return n;}
+function hit(s,ci,target,group,side){requireTurn(s,'play');if(!s.laid[s.turn].length)throw Error('Baixe sua fase antes de encaixar cartas.');if(!Number.isInteger(ci)||!Number.isInteger(target)||!Number.isInteger(group))throw Error('Jogada inválida.');const c=s.hands[s.turn][ci],m=s.laid[target]?.[group];if(!c||!m)throw Error('Escolha uma carta e um grupo da mesa.');const result=extend(m,c,side);if(!result)throw Error('Essa carta não encaixa nesse grupo.');s.laid[target][group]=result;s.hands[s.turn].splice(ci,1);s.last={player:s.turn,type:'hit'};s.move++;endRound(s);return true;}
+function discard(s,ci,target){requireTurn(s,'play');if(!Number.isInteger(ci)||!s.hands[s.turn][ci])throw Error('Selecione uma carta para descartar.');const c=s.hands[s.turn][ci];if(skip(c)){if(!Number.isInteger(target)||target===s.turn||!active(s,target)||!s.players[target]||s.skips[target])throw Error('Escolha um adversário que ainda não esteja pulado.');s.skips[target]=true;}else s.pile.push(c);s.hands[s.turn].splice(ci,1);s.last={player:s.turn,type:'discard',card:c};record(s,s.players[s.turn].name+(skip(c)?' pulou '+s.players[target].name+'.':' descartou '+label(c)+'.'));s.move++;endRound(s);if(s.phase==='play')advance(s);return true;}
+function nextRound(s,rng=Math.random){if(s.phase!=='round')throw Error('A rodada ainda não acabou.');s.round++;s.dealer=next(s,s.dealer);deal(s,rng);record(s,s.tiebreak?'Desempate: os empatados repetem a fase 10.':'Rodada '+s.round+' começou.');}
+function fitness(hand,phase){const ws=hand.filter(wild).length;let score=ws*5;for(const [kind,n] of phases[phase-1]){let best=0;if(kind==='set'){for(let v=1;v<=12;v++)best=Math.max(best,Math.min(n,hand.filter(c=>!wild(c)&&!skip(c)&&num(c)===v).length));}else if(kind==='color'){for(const c of ['R','B','G','Y'])best=Math.max(best,Math.min(n,hand.filter(x=>x[0]===c).length));}else for(let lo=1;lo<=13-n;lo++)best=Math.max(best,new Set(hand.filter(c=>!wild(c)&&!skip(c)&&num(c)>=lo&&num(c)<lo+n).map(num)).size);score+=best*3;}return score;}
+function hitOptions(s){const a=[];if(!s.laid[s.turn].length)return a;s.hands[s.turn].forEach((c,ci)=>s.laid.forEach((groups,target)=>groups.forEach((m,group)=>{for(const side of m.kind==='run'?['start','end']:['end'])if(extend(m,c,side))a.push({ci,target,group,side});})));return a;}
+function bot(s,rng=Math.random){if(s.phase==='round'){nextRound(s,rng);return;}if(s.winner!==null)return;const p=s.turn,difficulty=s.config.difficulty||'medium';if(s.phase==='draw'){const top=s.pile.at(-1),h=s.hands[p],use=top&&!skip(top)&&(wild(top)||findPhase([...h,top],s.progress[p])||fitness([...h,top],s.progress[p])>fitness(h,s.progress[p]));draw(s,(use&&!(difficulty==='easy'&&rng()<.4))?'discard':'deck',rng);}if(!s.laid[p].length&&findPhase(s.hands[p],s.progress[p]))lay(s);if(s.phase!=='play')return;let moves=hitOptions(s),guard=0;while(moves.length&&guard++<15){moves.sort((a,b)=>points(s.hands[p][b.ci])-points(s.hands[p][a.ci]));hit(s,moves[0].ci,moves[0].target,moves[0].group,moves[0].side);if(s.phase!=='play')return;moves=hitOptions(s);}let candidates=s.hands[p].map((c,ci)=>({c,ci,value:fitness(s.hands[p].filter((_,i)=>i!==ci),s.progress[p])*10+points(c)}));if(s.laid[p].length)candidates.forEach(x=>x.value=points(x.c));if(difficulty==='hard'){for(const x of candidates){if(!s.laid[p].length&&wild(x.c))x.value-=80;for(let i=0;i<4;i++)if(i!==p&&s.laid[i].some(m=>extend(m,x.c,'start')||extend(m,x.c,'end')))x.value-=35;if(skip(x.c))x.value+=20;}}if(difficulty==='easy'&&rng()<.3)shuffle(candidates,rng);else candidates.sort((a,b)=>b.value-a.value);let targets=[0,1,2,3].filter(i=>i!==p&&active(s,i)&&!s.skips[i]);targets.sort((a,b)=>s.hands[a].length-s.hands[b].length||s.progress[b]-s.progress[a]);candidates=candidates.filter(x=>!skip(x.c)||targets.length);if(candidates.length)discard(s,candidates[0].ci,targets[0]);}
+root.PhaseEngine={create,draw,lay,hit,discard,nextRound,bot,findPhase,extend,hitOptions,descriptions,phases,label,points,num,wild,skip};
+})(typeof window!=='undefined'?window:globalThis);
+
 /* Caricaturas vetoriais próprias, desenhadas inteiramente em código. */
 const Family = (() => {
  const names=['Iverson','Ana Paula','Gabriela','Gabriel'];
@@ -329,68 +375,291 @@ const Family = (() => {
  return {names,profiles,avatar,scenes};
 })();
 
-/* Melodias em domínio público; síntese e acompanhamento próprios.
- * ASSURANCE: Phoebe P. Knapp, 1873 (1839–1908), Harpa 140.
- * BETHANY: Lowell Mason, 1856 (1792–1872), Harpa 187.
- * Sem letras, gravações comerciais ou arranjos modernos copiados.
- * Fontes e enquadramento: MUSIC-CREDITS.md.
- */
+const PhaseScenes=[
+[['Iverson','Está valendo a honra. Em todas as dez fases!'],['Ana Paula','E a louça continua valendo depois da décima.']],
+[['Gabriel','Senhor, fase difícil dá direito a recuperação?'],['Iverson','Dá direito a embaralhar de novo.']],
+[['Gabriela','Pai, o senhor está juntando carta ou abrindo uma papelaria?']],
+[['Gabriel','Princesa, trinca é quando a carta quebra?'],['Gabriela','Amor, vamos começar pelos números.']],
+[['Ana Paula','Eu pedi organização. Até essas cartas estão separadas por cor.']],
+[['Iverson','Quem tem experiência não precisa de curinga.'],['Gabriela','Então deixa o seu no descarte, pai.']],
+[['Gabriel','Senhora, posso pular a fase em vez da pessoa?'],['Ana Paula','Pode tentar. A regra não vai deixar.']],
+[['Gabriela','Mãe, a senhora faz sequência até na lista do mercado.']],
+[['Iverson','Fase um de novo? É revisão de conteúdo.']],
+[['Gabriel','Princesa, nossa relação sobrevive a uma carta Pular?'],['Gabriela','Sobrevive. Mas eu tenho boa memória.']],
+[['Ana Paula','Quem está contando meus pontos pode contar a louça também.']],
+[['Gabriel','Senhor, se eu misturar vermelho e azul vira uma fase roxa?'],['Iverson','Vira uma dúvida que eu não esperava ouvir hoje.']],
+[['Gabriela','Baixei a fase. Agora vou baixar a expectativa de vocês.']],
+[['Iverson','Estou guardando esse curinga para uma ocasião especial.'],['Ana Paula','A ocasião é ganhar, querido.']],
+[['Gabriel','Senhora, carta dez vale dez mesmo?'],['Ana Paula','Essa veio com a resposta na pergunta.']],
+[['Gabriela','Pai, o senhor não está atrasado. Está apreciando a fase.']],
+[['Ana Paula','Sete da mesma cor? Finalmente uma tarefa parecida com separar roupa.']],
+[['Gabriel','Princesa, se eu fechar os olhos minha mão melhora?'],['Gabriela','Não, amor. Mas a sua expressão talvez.']],
+[['Iverson','A sequência está quase pronta. Só falta a parte que falta.']],
+[['Ana Paula','Eu não guardo rancor. Guardo uma carta Pular.']],
+[['Gabriela','Mãe, a senhora está quieta demais.'],['Ana Paula','Estou escolhendo quem vai descansar uma vez.']],
+[['Gabriel','Senhor, essa fase tem prazo de entrega?'],['Iverson','Tem. Antes de alguém bater.']],
+[['Iverson','Hoje eu vou longe.'],['Gabriela','Da fase um, espero, pai.']],
+[['Ana Paula','Esse monte parece a gaveta de cabos: sempre vem o que não preciso.']],
+[['Gabriel','Princesa, você me ama mesmo com 150 pontos?'],['Gabriela','Amo. Mas menos pontos seria um gesto bonito.']],
+[['Gabriela','Cinco iguais! Isso sim é encontro de família.']],
+[['Iverson','Vou pensar só mais um pouquinho.'],['Ana Paula','O café já passou de quente para lembrança.']],
+[['Gabriel','Senhora, se eu bater na mesa conta como bater?'],['Ana Paula','Conta como susto.']],
+[['Gabriela','Pai, hoje eu não posso ser sua dupla. Culpa das regras.']],
+[['Ana Paula','Gabriel, não esquece de comprar.'],['Gabriel','Sim, senhora. No mercado eu também preciso de lista.']],
+[['Iverson','Essa mão está estrategicamente misteriosa.']],
+[['Gabriel','Princesa, o curinga pode virar um pão de queijo?'],['Gabriela','Se pudesse, o pai já tinha comido oito.']],
+[['Ana Paula','Quem terminar primeiro não ganha isenção das tarefas.']],
+[['Gabriela','A fase muda. A teimosia do pai permanece.']],
+[['Iverson','Eu não fui pulado. Recebi um intervalo técnico.']],
+[['Gabriel','Senhor, sequência pode ser 11, 12, 1?'],['Iverson','Aqui não é relógio, rapaz.']],
+[['Ana Paula','Meu objetivo é pontuar pouco. Na família eu já sou dez.']],
+[['Gabriela','Senhora, esse descarte foi um presente?'],['Ana Paula','Foi. Só não acostuma.']],
+[['Gabriel','Princesa, tenho duas cartas quase iguais. Serve?'],['Gabriela','Quase serve, amor. Ou seja: não.']],
+[['Iverson','A família unida passa por todas as fases. Cada um na sua velocidade.']],
+[['Ana Paula','Estou vendo alguém com cara de quem vai pedir revanche.']],
+[['Gabriela','Pai, o senhor já decorou essa fase de tanto visitar.']],
+[['Gabriel','Senhora, posso pagar meus pontos em parcelas?'],['Ana Paula','Pode. Uma derrota por mês.']],
+[['Iverson','Essa carta Pular veio com endereço.']],
+[['Gabriela','Princesa também sabe descartar sem dó.'],['Gabriel','Anotado, Princesa. Respeitosamente preocupado.']],
+[['Ana Paula','Um, dois, três… Se fosse para chamar para jantar ninguém ouvia.']],
+[['Gabriel','Senhor, fase dez é a última mesmo?'],['Iverson','É. Depois vem a fase guardar as cadeiras.']],
+[['Iverson','Meu plano tem dez etapas. O problema é a primeira.']],
+[['Gabriela','Mãe, a senhora está colecionando vitórias?'],['Ana Paula','Estou liberando espaço nas mãos.']],
+[['Gabriel','Princesa, posso encaixar minha esperança nesse grupo?'],['Gabriela','Só se ela tiver o número certo.']],
+[['Ana Paula','Quem deixou o pote vazio na geladeira?'],['Iverson','Vamos manter o foco nas cartas.']],
+[['Iverson','Descartei com convicção. Não disse que era a carta certa.']],
+[['Gabriel','Senhora, estou aprendendo. Devagar, mas com muita educação.']],
+[['Gabriela','Uma fase de cada vez. E uma provocação por compra.']]
+];
+
+/* Cinco instrumentais originais, compostos e sintetizados em código. */
 const Hymns=(()=>{
- const parse=s=>s.trim().split(/\s+/).map(t=>t.split(':').map(Number));
- const tracks={
-  assurance:{beat:.30,bar:9,tonic:50,chords:[0,0,7,0,0,7,7,7,0,0,0,0,5,0,7,0],notes:parse(`
-   66:1 64:1 62:1 69:3 69:3 67:1 69:1 71:1 69:6 69:1 66:1 69:1
-   74:3 73:2 73:1 71:1 69:1 68:1 69:6
-   66:1 64:1 62:1 69:3 69:3 67:1 69:1 71:1 69:6 62:1 64:1 66:1
-   67:3 64:3 62:1 64:1 61:1 62:6
-   69:1 69:1 69:1 74:3 69:3 71:1 71:1 71:1 69:6 69:1 69:1 69:1
-   71:3 74:3 73:1 73:1 71:1 73:6
-   73:1 74:1 76:1 74:3 69:3 71:1 69:1 71:1 69:6 62:1 64:1 66:1
-   67:3 64:3 62:1.5 64:.5 61:1 62:6 0:6`)},
-  bethany:{beat:.68,bar:4,tonic:53,chords:[0,5,0,7,0,5,7,0,0,5,0,7,0,5,7,0],notes:parse(`
-   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:2 65:1 69:1 67:4
-   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:1 65:1 64:1 67:1 65:4
-   72:2 74:1 72:1 72:1.5 69:.5 72:2 72:2 74:1 72:1 72:1.5 69:.5 67:2
-   69:2 67:1 65:1 65:1.5 62:.5 62:2 60:1 65:1 64:1 67:1 65:4 0:4`)}
- };
- const cache=new Map();
- function url(key){
-  if(cache.has(key))return cache.get(key);
-  const song=tracks[key]||tracks.assurance,rate=22050;
-  const length=song.notes.reduce((n,x)=>n+x[1],0)*song.beat;
-  const samples=new Float32Array(Math.ceil((length+1)*rate));
-  function note(midi,start,seconds,amp){
-   if(!midi)return;
-   const freq=440*2**((midi-69)/12),begin=Math.floor(start*rate),count=Math.min(Math.floor((seconds+.35)*rate),samples.length-begin);
-   for(let i=0;i<count;i++){
-    const t=i/rate,attack=Math.min(1,t/.018),release=Math.max(0,Math.min(1,(seconds+.35-t)/.38));
-    const envelope=attack*release*Math.exp(-t/Math.max(.35,seconds*.85));
-    const phase=2*Math.PI*freq*t;
-    samples[begin+i]+=amp*envelope*(Math.sin(phase)+.19*Math.sin(phase*2)*Math.exp(-t*3)+.06*Math.sin(phase*3)*Math.exp(-t*5));
-   }
-  }
-  let time=.04;
-  for(const [pitch,duration] of song.notes){note(pitch,time,duration*song.beat*.95,.26);time+=duration*song.beat;}
-  // Acompanhamento arpejado próprio; a melodia permanece em primeiro plano.
-  const bars=Math.ceil((length-song.beat*4)/(song.bar*song.beat));
-  for(let bar=0;bar<bars;bar++){
-   const root=song.tonic+song.chords[bar%song.chords.length],start=bar*song.bar*song.beat;
-   note(root-12,start,song.bar*song.beat,.10);
-   const triad=[root,root+4,root+7,root+12];
-   for(let j=0;j<song.bar;j++)note(triad[j%4],start+j*song.beat,song.beat*2,.055);
-  }
-  const data=new ArrayBuffer(44+samples.length*2),view=new DataView(data);
-  const text=(offset,s)=>{for(let i=0;i<s.length;i++)view.setUint8(offset+i,s.charCodeAt(i));};
-  text(0,'RIFF');view.setUint32(4,36+samples.length*2,true);text(8,'WAVE');text(12,'fmt ');
-  view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);
-  view.setUint32(24,rate,true);view.setUint32(28,rate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);
-  text(36,'data');view.setUint32(40,samples.length*2,true);
-  for(let i=0;i<samples.length;i++)view.setInt16(44+i*2,Math.max(-1,Math.min(1,samples[i]))*32767,true);
-  const result=URL.createObjectURL(new Blob([data],{type:'audio/wav'}));cache.set(key,result);return result;
- }
- return {url};
+ const tracks={varanda:{title:'Luzes da varanda',bpm:108,key:60,melody:[0,4,7,9,7,4,2,4,5,9,7,4,2,0,2,7],chords:[0,9,5,7]},cafe:{title:'Café depois das oito',bpm:116,key:62,melody:[7,4,2,0,2,4,7,11,9,7,4,5,4,2,0,7],chords:[0,5,9,7]},cartas:{title:'Cartas na mesa',bpm:112,key:65,melody:[0,2,4,7,4,2,9,7,5,4,2,5,4,7,11,7],chords:[0,7,9,5]},estrelas:{title:'Entre estrelas e risadas',bpm:104,key:67,melody:[4,7,12,11,9,7,4,2,0,4,9,7,5,4,2,0],chords:[0,9,5,0]},revanche:{title:'Só mais uma revanche',bpm:122,key:60,melody:[7,7,9,7,4,2,0,4,5,5,9,7,11,9,7,0],chords:[0,5,7,0]}};
+ const cache=new Map();function url(key){if(cache.has(key))return cache.get(key);const song=tracks[key]||tracks.varanda,rate=22050,beat=60/song.bpm,bars=32,length=bars*4*beat,samples=new Float32Array(Math.ceil((length+1)*rate));
+ function note(midi,start,duration,amp,bass=false){const freq=440*2**((midi-69)/12),begin=Math.floor(start*rate),count=Math.min(Math.ceil((duration+.16)*rate),samples.length-begin);for(let i=0;i<count;i++){const t=i/rate,env=Math.min(1,t/.009)*Math.max(0,Math.min(1,(duration+.16-t)/.2))*Math.exp(-t/(bass?.8:.48)),p=2*Math.PI*freq*t;samples[begin+i]+=amp*env*(Math.sin(p)+(bass?.08:.22)*Math.sin(2*p)+.055*Math.sin(3*p));}}
+ function drum(start,kick){const begin=Math.floor(start*rate),len=Math.floor(rate*(kick?.18:.055));let seed=1709;for(let i=0;i<len&&begin+i<samples.length;i++){const t=i/rate;seed=(seed*1664525+1013904223)>>>0;samples[begin+i]+=(kick?Math.sin(2*Math.PI*(65*t-80*t*t)):.25*(seed/2147483648-1))*Math.exp(-t*(kick?24:70))*(kick?.09:.06);}}
+ for(let bar=0;bar<bars;bar++){const offset=song.chords[bar%4],base=song.key+offset,minor=offset===9,triad=[base,base+(minor?3:4),base+7];for(let b=0;b<4;b++){const start=(bar*4+b)*beat;note(base-24+(b%2?7:0),start,beat*.7,.13,true);drum(start,b%2===0);drum(start+beat*.5,false);triad.forEach((n,i)=>note(n,start+beat*.5+i*.018,beat*.3,.045));const ix=(bar*4+b)%song.melody.length,pitch=song.key+12+song.melody[ix]+(bar>=16&&bar<24?12:0);if(bar%8!==7||b<2)note(pitch,start+(b%2?.06:0),beat*(b===3?.85:.55),.18);}}
+ const buf=new ArrayBuffer(44+samples.length*2),v=new DataView(buf),str=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));str(0,'RIFF');v.setUint32(4,36+samples.length*2,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,samples.length*2,true);for(let i=0;i<samples.length;i++){const fade=Math.min(1,i/rate*.8,(samples.length-i)/rate);v.setInt16(44+i*2,Math.tanh(samples[i])*fade*32767,true);}const result=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));cache.set(key,result);return result;}return {url,tracks};
 })();
 
+const Speech=(()=>{
+ const layer=document.createElement('div');layer.id='speech-layer';layer.setAttribute('aria-live','polite');document.body.append(layer);const active=new Map();
+ function place(){for(const [name,item] of active){const anchor=[...document.querySelectorAll('[data-speaker],[data-intro]')].find(el=>(el.dataset.speaker||el.dataset.intro)===name&&el.getBoundingClientRect().width&&el.getBoundingClientRect().height);if(!anchor){item.el.style.visibility='hidden';continue;}item.el.style.visibility='visible';const r=anchor.getBoundingClientRect(),b=item.el.getBoundingClientRect(),vw=window.innerWidth,vh=window.visualViewport?.height||window.innerHeight,left=Math.max(7,Math.min(vw-b.width-7,r.left+r.width/2-b.width/2)),top=Math.max(45,Math.min(vh-b.height-48,r.top-b.height-9));item.el.style.left=left+'px';item.el.style.top=top+'px';item.el.style.setProperty('--tail',Math.max(12,Math.min(b.width-12,r.left+r.width/2-left))+'px');}}
+ function say(name,text,human=false){const old=active.get(name);if(old?.human&&!human)return;if(old){clearTimeout(old.timer);old.el.remove();}const el=document.createElement('div');el.className='avatar-speech'+(human?' human-message':'');const b=document.createElement('b'),p=document.createElement('span');b.textContent=name+(human?' · chat':' · resenha');p.textContent=text;el.append(b,p);layer.append(el);const item={el,human,timer:setTimeout(()=>{el.remove();if(active.get(name)===item)active.delete(name);},Math.min(22000,Math.max(12000,text.length*80)))};active.set(name,item);place();}
+ window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);return {say,place,clearBots(){for(const [name,x] of active)if(!x.human){clearTimeout(x.timer);x.el.remove();active.delete(name);}}};
+})();
+function createNightAudio(prefs,onError=()=>{}){
+ const audio={ctx:null,bus:null,player:null,track:null,bag:[],blocked:false,
+ init(){try{if(navigator.audioSession)navigator.audioSession.type='playback';if(!this.ctx||this.ctx.state==='closed'){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);}if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});this.bus.gain.setTargetAtTime(prefs.volume/100*.20,this.ctx.currentTime,.05);if(this.player)this.player.volume=prefs.volume/100;}catch{}},
+ tone(freq,length=.3,offset=0,volume=.3,type='sine'){if(!this.ctx||this.ctx.state!=='running')return;const t=this.ctx.currentTime+offset,o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(volume,t+.018);g.gain.exponentialRampToValueAtTime(.0001,t+length);o.connect(g);g.connect(this.bus);o.start(t);o.stop(t+length+.02);},
+ next(){if(!this.bag.length){this.bag=Object.keys(Hymns.tracks);for(let i=this.bag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]];}if(this.bag.at(-1)===this.track)this.bag.reverse();}this.track=this.bag.pop();if(this.player)this.player.src=Hymns.url(this.track);this.play();},
+ play(){if(!prefs.music||document.hidden){this.stop();return;}try{if(navigator.audioSession)navigator.audioSession.type='playback';if(!this.player){this.player=new Audio();this.player.preload='auto';this.player.setAttribute('playsinline','');this.player.onended=()=>this.next();}if(!this.track){this.next();return;}if(!this.player.src)this.player.src=Hymns.url(this.track);this.player.volume=prefs.volume/100;this.player.play().then(()=>this.blocked=false).catch(()=>{this.blocked=true;onError('Toque em Som → Ativar áudio para ouvir.');});}catch{this.blocked=true;}},
+ stop(){this.player?.pause();},fx(kind){if(!prefs.effects)return;this.init();(kind==='win'?[523,659,784,1047]:kind==='sequence'?[392,523,659]:[440,587]).forEach((f,i)=>this.tone(f,.25,i*.085,.35));},get title(){return Hymns.tracks[this.track]?.title||'Playlist aleatória';}};return audio;
+}
+
+const GAME=new URLSearchParams(location.search).get('game');
+function nightHub(){
+ document.body.classList.add('hub-body');document.querySelector('main').innerHTML='<section class="night-hub"><div class="hub-intro"><span class="eyebrow">A MELHOR PARTE DO DIA COMEÇA AQUI</span><h1>Noite de <em>Jogos.</em></h1><p>Puxe uma cadeira. A família já está com as cartas na mão.</p></div><div class="game-choices"><a class="game-choice sequence-choice" href="?game=sequence"><div class="choice-art sequence-art"><div class="mini-board">'+Array.from({length:25},(_,i)=>'<i class="'+([0,6,12,18,24].includes(i)?'gold-chip':i%7===0?'blue-chip':'')+'">'+['♠','♥','♦','♣'][i%4]+'</i>').join('')+'</div></div><div class="choice-copy"><span class="eyebrow">ESTRATÉGIA EM DUPLA</span><h2>Sequence</h2><p>Conecte cinco. Bloqueie o rival.<br>Defenda a honra da sua dupla.</p><span class="choice-enter">Sentar à mesa <b>↗</b></span></div></a><a class="game-choice phase-choice" href="?game=phase10"><div class="choice-art phase-art"><span class="show-card sc-red">7</span><span class="show-card sc-blue">8</span><span class="show-card sc-gold">9</span><span class="show-card sc-green">10</span></div><div class="choice-copy"><span class="eyebrow">DEZ FASES. MIL DESCULPAS.</span><h2>Phase 10</h2><p>Monte sua fase. Esvazie a mão.<br>Hoje é cada um por si.</p><span class="choice-enter">Entrar na rodada <b>↗</b></span></div></a></div><div class="hub-family">'+Family.names.map(n=>'<div data-intro="'+n+'">'+Family.avatar(n)+'<span>'+n+'</span></div>').join('')+'<p>Quatro personagens.<br><strong>Resenha sem limite.</strong></p></div><p class="hub-foot">1–4 pessoas · bots nas vagas · chat na mesa</p></section>';
+ document.querySelector('.brand').innerHTML='<b>✦</b><span>NOITE DE JOGOS<small>A FAMÍLIA TEM LUGAR MARCADO</small></span>';document.querySelector('.topbar nav').innerHTML='<button class="quiet" id="hub-music">♫ Música</button>';
+ let prefs={music:false,volume:30,effects:true};const audio=createNightAudio(prefs);document.getElementById('hub-music').onclick=()=>{prefs.music=!prefs.music;audio.init();audio.play();document.getElementById('hub-music').textContent=prefs.music?'♫ Som ligado':'♫ Música';};
+ document.querySelectorAll('.game-choice').forEach(a=>a.addEventListener('click',()=>audio.stop()));
+ const adjust=()=>document.documentElement.style.setProperty('--app-height',(window.visualViewport?.height||innerHeight)+'px');adjust();window.visualViewport?.addEventListener('resize',adjust);
+ setTimeout(()=>Speech.say('Iverson','Está valendo a honra. Escolhe a mesa!'),1500);
+}
+function nightPrepare(){document.body.classList.add('night-game',GAME==='phase10'?'is-phase':'is-sequence');document.title=(GAME==='phase10'?'Phase 10':'Sequence')+' · Noite de Jogos';document.querySelector('.brand').innerHTML='<b>☾</b><span>NOITE DE JOGOS<small>← ESCOLHER OUTRA MESA</small></span>';document.querySelector('.welcome h1').innerHTML=GAME==='phase10'?'Dez fases.<br><em>Uma família sem filtro.</em>':'Boa dupla.<br><em>Melhor resenha.</em>';document.querySelector('.home-subtitle').textContent=GAME==='phase10'?'Aqui ninguém herda a fase do pai. Cada um conquista a sua.':'Duas sequências para vencer. Muitas histórias para contar.';}
+
+if(!["sequence","phase10"].includes(GAME)){nightHub();}else{nightPrepare();if(GAME==="phase10"){(()=>{
+'use strict';
+const E=PhaseEngine,$=id=>document.getElementById(id),SETTINGS='sequence-audio-v1',SAVE='phase10-family-v1';
+let multiplayer=null,state=null,selected=-1,timer=null,paused=false,toastTimer,chatTimer,chatGeneration=0,lobbyIndex=0;
+const phaseSelected=new Set();let prefs={music:true,effects:true,volume:35,banter:true};try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function toggle(id,yes){$(id).classList.toggle('hidden',!yes);}
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3300);}
+const audio=createNightAudio(prefs,toast),portrait=n=>'<span class="portrait">'+Family.avatar(n)+'</span>';
+function unlockAudio(){audio.init();if(prefs.music&&(!audio.player||audio.player.paused))audio.play();}
+document.addEventListener('pointerup',unlockAudio,{passive:true});document.addEventListener('touchend',unlockAudio,{passive:true});
+function save(){if(!multiplayer?.enabled&&state)storageSet(SAVE,state);}
+function saved(){try{const s=JSON.parse(localStorage.getItem(SAVE)||'null');return s?.kind==='phase10'&&s.winner===null?s:null;}catch{return null;}}
+function fitTable(){document.documentElement.style.setProperty('--app-height',Math.floor(window.visualViewport?.height||innerHeight)+'px');if(!state)return;const wrap=document.querySelector('.hand-wrap'),dock=document.querySelector('.hand-dock'),human=$('human-seat').getBoundingClientRect().width,n=state.hands[0].length,cardW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-w'))||62;wrap.style.setProperty('--card-step',Math.min(44,Math.max(10,(dock.clientWidth-human-cardW-30)/Math.max(1,n-1)))+'px');$('hand').style.setProperty('--hand-count',n);Speech.place();}
+function queueFit(){requestAnimationFrame(fitTable);}window.addEventListener('resize',queueFit);window.visualViewport?.addEventListener('resize',queueFit);
+function showModal(html){$('modal-content').innerHTML=html;if(!$('modal').open)$('modal').showModal();}
+function closeModal(){$('modal').close();}
+$('close-modal').onclick=closeModal;
+const phaseIntros={'Iverson':'São dez fases. E em todas está valendo a honra!','Ana Paula':'Eu organizo a casa, as cartas e a ordem de quem vai perder.','Gabriela':'Pai, mãe… hoje cada um cuida da própria fase.','Gabriel':'Princesa, tem fase de treinamento? Perguntando para um amigo.'};
+function renderLobby(){$('family-lobby').innerHTML=Family.names.map(n=>'<div class="lobby-person '+(n===$('character').value?'active':'')+'" data-intro="'+n+'">'+portrait(n)+'<strong>'+n+'</strong><small>'+Family.profiles[n].role+'</small></div>').join('');const n=Family.names[lobbyIndex%4];$('lobby-quote').textContent=n+': '+phaseIntros[n];multiplayer?.decorateLobby();Speech.place();}
+function updateLineup(){$('lineup').textContent='Cada um por si · 10 fases · menos pontos no desempate.';renderLobby();}
+function clearSpeech(){Speech.clearBots();}
+function stopChat(){clearTimeout(chatTimer);chatGeneration++;clearSpeech();}
+function nextChat(delay=7000){clearTimeout(chatTimer);if(!prefs.banter||document.hidden)return;const gen=chatGeneration;chatTimer=setTimeout(()=>{if(gen!==chatGeneration)return;if(!state||$('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}if(paused||state.winner!==null){nextChat();return;}const pool=PhaseScenes.filter(scene=>scene.some(([n])=>!multiplayer?.enabled||!state.players.some(p=>p.name===n&&p.human&&p.online)));if(!pool.length){nextChat(15000);return;}const scene=pool[Math.floor(Math.random()*pool.length)].filter(([n])=>!multiplayer?.enabled||!state.players.some(p=>p.name===n&&p.human&&p.online));let i=0;function speak(){if(gen!==chatGeneration)return;const [name,text]=scene[i++];Speech.say(name,text);chatTimer=setTimeout(()=>i<scene.length?speak():nextChat(4500+Math.random()*5000),13000);}speak();},delay);}
+function card(c,mini=false){return '<span class="p-card pc-'+c[0]+(mini?' mini':'')+'" title="'+E.label(c)+'"><small>'+({R:'●',B:'◆',G:'♣',Y:'★',W:'✦',S:'⊘'}[c[0]])+'</small><b>'+(c==='W'?'✦':c==='S'?'⊘':E.num(c))+'</b></span>';}
+function renderPeople(){const seat=(p,i,pos)=>'<div class="player '+pos+(state.turn===i?' active':'')+'" data-speaker="'+p.name+'">'+portrait(p.name)+'<div class="nameplate"><strong>'+p.name+'</strong><small>Fase '+state.progress[i]+' · '+state.scores[i]+' pts</small><small>'+(state.handCounts?.[i]??state.hands[i].length)+' cartas'+(state.skips[i]?' · ⊘ pula':multiplayer?.enabled?(p.human&&p.online?' · on-line':' · bot'):' · bot')+'</small></div></div>';$('players').innerHTML=state.players.slice(1).map((p,k)=>seat(p,k+1,['seat-left','seat-top','seat-right'][k])).join('');$('human-seat').dataset.speaker=state.players[0].name;$('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+state.players[0].name+'</strong><small>Fase '+state.progress[0]+' · '+state.scores[0]+' pts</small></div>';}
+function render(){if(!state)return;const my=state.turn===0&&state.phase==='play'&&!paused;renderPeople();$('game-mode').textContent='PHASE 10 · RODADA '+state.round;$('score').textContent='Sua fase '+state.progress[0]+'/10';$('deck-count').textContent=(state.deckCount??state.deck.length)+' cartas';$('hand-count').textContent=state.hands[0].length+' cartas';$('phase-goal').textContent=state.laid[0].length?'Fase baixada! Encaixe cartas e tente bater.':'Fase '+state.progress[0]+': '+E.descriptions[state.progress[0]-1];
+ $('phase-piles').innerHTML='<button class="pile-button" id="stock-pile" '+(state.turn===0&&state.phase==='draw'&&!paused?'':'disabled')+'><span class="p-card p-back">✦</span><small>Comprar</small></button><button class="pile-button" id="discard-pile" '+(state.turn===0&&state.phase==='draw'&&!paused&&state.pile.length&&state.pile.at(-1)!=='S'?'':'disabled')+'>'+(state.pile.length?card(state.pile.at(-1)):'<span class="p-card empty">—</span>')+'<small>Descarte</small></button><div class="phase-round-label"><b>RODADA '+state.round+'</b><span>'+(state.tiebreak?'Desempate da fase 10':'Baixe a fase. Esvazie a mão.')+'</span></div>';
+ $('phase-melds').innerHTML=state.players.map((p,i)=>'<div class="meld-row"><strong>'+p.name+' <small>F'+state.progress[i]+'</small></strong><div class="meld-groups">'+(state.laid[i].length?state.laid[i].map((m,g)=>'<button class="meld-group" data-target="'+i+'" data-group="'+g+'" aria-label="Encaixar em '+p.name+', grupo '+(g+1)+'" '+(!my||!state.laid[0].length||phaseSelected.size!==1?'disabled':'')+'>'+m.cards.map(c=>card(c,true)).join('')+'</button>').join(''):'<span class="empty-phase">'+E.descriptions[state.progress[i]-1]+'</span>')+'</div></div>').join('');
+ $('hand').innerHTML=state.hands[0].map((c,i)=>{const x=i-(state.hands[0].length-1)/2;return '<button class="hand-card phase-hand '+(phaseSelected.has(i)?'selected':'')+'" style="--card-index:'+i+';--fan-angle:'+(x*1.8)+'deg;--fan-y:'+(Math.abs(x)*1.3)+'px" data-card="'+i+'" aria-label="'+E.label(c)+'" aria-pressed="'+phaseSelected.has(i)+'" '+(!my?'disabled':'')+'>'+card(c)+'</button>';}).join('');
+ $('turn-label').textContent=state.phase==='round'?'RODADA ENCERRADA':state.winner!==null?'PARTIDA ENCERRADA':state.turn===0?'SUA VEZ':'VEZ DE '+state.players[state.turn].name.toUpperCase();$('turn-title').textContent=state.phase==='round'?state.players[state.roundResult.winner].name+' bateu!':state.winner!==null?state.players[state.winner].name+' venceu!':state.turn!==0?'Preparando a jogada…':state.phase==='draw'?'Compre do monte ou do descarte':state.laid[0].length?'Encaixe ou descarte uma carta':'Monte sua fase ou descarte';$('status').textContent=state.phase==='round'?'Próxima rodada em alguns segundos. Pontos: '+state.roundResult.penalties.map((v,i)=>state.players[i].name+' +'+v).join(' · '):phaseSelected.size>1?phaseSelected.size+' cartas selecionadas. Toque de novo para desmarcar.':state.phase==='draw'?'Toque em um dos dois montes no centro.':'Selecione cartas para baixar a fase; selecione uma para encaixar ou descartar.';
+ const find=$('find-phase'),lay=$('lay-phase'),discard=$('phase-discard');find.disabled=!my||!!state.laid[0].length;lay.disabled=!my||!!state.laid[0].length||!phaseSelected.size;discard.disabled=!my||phaseSelected.size!==1;$('stock-pile').onclick=()=>act('pdraw',{source:'deck'});$('discard-pile').onclick=()=>act('pdraw',{source:'discard'});save();queueFit();}
+function schedule(){clearTimeout(timer);if(multiplayer?.enabled||!state||paused||document.hidden||state.winner!==null)return;if(state.phase==='round'||state.turn!==0)timer=setTimeout(()=>{try{E.bot(state);phaseSelected.clear();render();if(state.winner!==null)showResult();else schedule();}catch(e){toast(e.message);}},state.phase==='round'?12000:5200);}
+function act(type,p={}){if(multiplayer?.enabled)return multiplayer.action(type,p);try{if(state.turn!==0||paused)throw Error('Aguarde sua vez.');if(type==='pdraw')E.draw(state,p.source);if(type==='playphase')E.lay(state,p.ids);if(type==='hit')E.hit(state,p.ci,p.target,p.group,p.side);if(type==='discard')E.discard(state,p.ci,p.target);phaseSelected.clear();selected=-1;audio.fx(type==='playphase'?'sequence':'place');render();if(state.winner!==null)showResult();schedule();}catch(e){toast(e.message);}}
+function showGame(){stopChat();toggle('home',false);toggle('game',true);toggle('pause',true);paused=false;selected=-1;phaseSelected.clear();render();schedule();nextChat();}
+function start(){state=E.create({name:$('character').value,difficulty:new FormData($('setup')).get('difficulty')});showGame();audio.init();audio.play();}
+function phaseResult(info){const title=state.winner===0?'Você venceu as dez fases!':state.players[state.winner].name+' venceu!';showModal('<h2>'+title+'</h2><p>'+state.players.map((p,i)=>p.name+': '+state.scores[i]+' pontos').join('<br>')+'</p><div class="actions">'+(!info||info.host?'<button class="primary" id="phase-rematch">Jogar outra</button>':'<p>Aguarde quem abriu a sala iniciar outra.</p>')+'<button class="secondary" id="phase-exit">Noite de Jogos</button></div>');if($('phase-rematch'))$('phase-rematch').onclick=()=>{closeModal();if(info)multiplayer.action('rematch');else start();};$('phase-exit').onclick=async()=>{if(!info||await multiplayer.action('leave'))location.assign(location.pathname);};}
+function showResult(){if(multiplayer?.enabled)multiplayer.result();else phaseResult(null);}
+$('arena').querySelector('.board-frame').remove();$('arena').querySelector('.table-wordmark').remove();$('arena').insertAdjacentHTML('beforeend','<div id="phase-table"><div id="phase-piles"></div><div id="phase-melds"></div></div>');$('game').classList.add('phase-game');$('conversation').insertAdjacentHTML('afterend','<p id="phase-goal"></p>');document.querySelector('.turn-actions').innerHTML='<button class="secondary" id="find-phase">Encontrar fase</button><button class="primary" id="lay-phase">Baixar fase</button><button class="secondary" id="phase-discard">Descartar</button>';
+$('hand').onclick=e=>{const b=e.target.closest('[data-card]');if(!b)return;const i=Number(b.dataset.card);phaseSelected.has(i)?phaseSelected.delete(i):phaseSelected.add(i);selected=phaseSelected.size===1?[...phaseSelected][0]:-1;render();};
+$('find-phase').onclick=()=>{const found=E.findPhase(state.hands[0],state.progress[0]);if(!found){toast('Sua mão ainda não completa esta fase.');return;}phaseSelected.clear();found.flatMap(x=>x.ids).forEach(i=>phaseSelected.add(i));render();toast('Combinação selecionada. Toque em Baixar fase.');};
+$('lay-phase').onclick=()=>act('playphase',{ids:[...phaseSelected]});
+$('phase-discard').onclick=()=>{if(phaseSelected.size!==1)return;const ci=[...phaseSelected][0];if(state.hands[0][ci]!=='S'){act('discard',{ci});return;}showModal('<h2>Quem vai pular a vez?</h2><div class="actions">'+state.players.slice(1).map((p,j)=>!state.skips[j+1]&&(!state.tiebreak||state.tiebreak.includes(j+1))?'<button class="secondary" data-skip="'+(j+1)+'">'+p.name+'</button>':'').join('')+'</div>');$('modal-content').querySelectorAll('[data-skip]').forEach(b=>b.onclick=()=>{closeModal();act('discard',{ci,target:Number(b.dataset.skip)});});};
+$('phase-melds').onclick=e=>{const b=e.target.closest('[data-group]');if(!b||phaseSelected.size!==1)return;const ci=[...phaseSelected][0],target=Number(b.dataset.target),group=Number(b.dataset.group),m=state.laid[target][group],c=state.hands[0][ci],sides=(m.kind==='run'?['start','end']:['end']).filter(side=>E.extend(m,c,side));if(!sides.length){toast('Essa carta não encaixa aqui.');return;}if(sides.length===1){act('hit',{ci,target,group,side:sides[0]});return;}showModal('<h2>Onde colocar o curinga?</h2><div class="actions"><button class="secondary" id="hit-start">Antes do '+m.lo+'</button><button class="secondary" id="hit-end">Depois do '+m.hi+'</button></div>');for(const side of sides)$('hit-'+side).onclick=()=>{closeModal();act('hit',{ci,target,group,side});};
+$('setup').onsubmit=e=>{e.preventDefault();prefs.music=$('start-music').checked;audio.init();audio.play();if(multiplayer?.enabled)multiplayer.start();else start();};
+$('continue').onclick=()=>{state=saved();if(state)showGame();};toggle('continue',!!saved());
+$('companion').closest('label').classList.add('hidden');$('character').onchange=updateLineup;$('family-lobby').onclick=e=>{const p=e.target.closest('[data-intro]');if(p){$('character').value=p.dataset.intro;updateLineup();}};
+$('history-button').onclick=()=>showModal('<h2>Últimas jogadas</h2><ol>'+state.log.map(l=>'<li>'+escapeHTML(l)+'</li>').join('')+'</ol>');
+$('pause').onclick=()=>{if(multiplayer?.enabled){multiplayer.menu();return;}paused=true;clearTimeout(timer);showModal('<h2>Pausa para o café</h2><button class="primary" id="phase-resume">Voltar</button>');$('phase-resume').onclick=()=>{closeModal();paused=false;schedule();render();};};$('modal').addEventListener('close',()=>{if(paused){paused=false;schedule();render();}});
+$('brand').onclick=e=>{e.preventDefault();save();location.assign(location.pathname);};
+$('banter-toggle').onclick=()=>{prefs.banter=!prefs.banter;storageSet(SETTINGS,prefs);$('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));stopChat();if(prefs.banter)nextChat();};
+$('start-music').checked=prefs.music;$('start-music').onchange=e=>{prefs.music=e.target.checked;storageSet(SETTINGS,prefs);audio.play();};
+$('rules').onclick=()=>showModal('<span class="eyebrow">PHASE 10</span><h2>Dez fases, cada um por si</h2><p>Compre uma carta do monte ou do descarte. Baixe sua fase completa, encaixe cartas em fases já baixadas e descarte uma para encerrar a vez. Só pode encaixar depois de baixar sua própria fase.</p><ol>'+E.descriptions.map(d=>'<li>'+d+'</li>').join('')+'</ol><p>Grupos iguais usam o mesmo número, em qualquer cor. Sequências são consecutivas de 1 a 12, sem voltar ao 1. Cor exige apenas a mesma cor. Curingas substituem números e cores: a fase precisa de pelo menos uma carta numérica. Curingas baixados ficam na mesa. Pular encerra a vez e bloqueia a próxima vez de um adversário; não pode ser comprado do descarte nem acumulado contra alguém já bloqueado.</p><p>Quem esvazia a mão encerra a rodada. Todos que baixaram avançam uma fase; os demais repetem. Cartas restantes valem: 1–9 = 5, 10–12 = 10, Pular = 15, Curinga = 25 pontos. Vence quem completa a fase 10 ao fim da rodada; entre vários, vence a menor soma. Empatados repetem a fase 10 e o primeiro a bater vence.</p><p>Toque em Encontrar fase para selecionar uma combinação válida, depois em Baixar fase. Para encaixar, selecione uma carta e toque no grupo desejado da mesa. Para descartar, selecione uma carta e toque em Descartar. As rodadas seguintes começam automaticamente.</p><p>Quatro lugares, com bots nas vagas. Somente quem abriu a sala inicia. A mesa continua durante o chat. Os bots jogam em cerca de cinco segundos.</p><p><a href="https://service.mattel.com/instruction_sheets/HHR41-Eng.pdf" target="_blank" rel="noopener">Regras da Mattel</a>. Adaptação independente com arte própria.</p>');
+document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();stopChat();clearTimeout(timer);save();}else{audio.play();nextChat();schedule();queueFit();}});window.addEventListener('beforeunload',save);
+updateLineup();nextChat();fitTable();
+$('sound').onclick=()=>{audio.init();showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Música e sons</h2><p>Cinco instrumentais originais, mais animados, em ordem aleatória. Uma música começa assim que a outra termina.</p><p id="now-playing">♫ '+audio.title+'</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música</label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos</label><label class="field">Volume<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="secondary" id="next-song">Próxima música</button><button class="primary" id="sound-done">Pronto</button></div>');$('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};$('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};$('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};$('audio-unlock').onclick=()=>{prefs.music=true;$('music-check').checked=true;audio.init();audio.play();};$('next-song').onclick=()=>{audio.next();$('now-playing').textContent='♫ '+audio.title;};$('sound-done').onclick=closeModal;};
+
+'use strict';
+// O navegador envia intenções; cartas, bots e validação ficam no servidor.
+(()=>{
+ const solo=new URLSearchParams(location.search).get('solo')==='1';
+ const button=document.createElement('button');button.className='quiet';button.id='room-chat-button';button.textContent=solo?'On-line':'Chat';document.querySelector('.topbar nav').prepend(button);
+ if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
+ const setup=$('setup'),startButton=setup.querySelector('button[type=submit]');
+ setup.querySelector('h2').textContent='Conectando à família…';
+ const note=document.createElement('p');note.id='online-status';note.className='lineup';note.setAttribute('role','status');setup.prepend(note);
+ const actions=document.createElement('div');actions.className='online-actions';actions.innerHTML='<button type="button" id="reconnect" class="quiet">Reconectar</button><button type="button" id="play-solo" class="quiet">Só eu e bots</button>';setup.append(actions);
+ const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
+ let lastToken=null,client,channel,info=null,queue=Promise.resolve(),refreshTimer,botTimer,heartbeatTimer,lastMessage=0,unread=0,ended=false,connected=false,joining=false;
+ const setStatus=t=>{note.textContent=t;};
+ const decorateLobby=()=>{
+  if(!info)return;
+  document.querySelectorAll('[data-intro]').forEach(el=>{
+   const seat=Family.names.indexOf(el.dataset.intro),m=info.members.find(m=>m.seat===seat);
+   el.querySelector('small').textContent=m?(m.you?'Você':m.online?'Pessoa on-line':'Reconectando…'):'Bot · lugar disponível';
+   el.classList.toggle('taken',!!m&&!m.you);
+  });
+ };
+ const updateChat=messages=>{
+  const box=$('chat-messages'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<70;
+  const newest=messages.at(-1)?.id||0;
+  for(const m of messages)if(m.id>lastMessage&&Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);
+  lastMessage=newest;button.textContent='Chat';
+  box.replaceChildren();
+  if(!messages.length){const p=document.createElement('p');p.className='chat-help';p.textContent='O café está pronto. Só falta alguém puxar assunto.';box.append(p);}
+  for(const m of messages.slice(-3)){const row=document.createElement('p'),name=document.createElement('strong'),body=document.createElement('span');name.textContent=m.speaker+': ';body.textContent=m.body;row.append(name,body);box.append(row);}
+  box.scrollTop=box.scrollHeight;requestAnimationFrame(Speech.place);
+ };
+ function renderInfo(){
+  if(!info)return;
+  setup.querySelector('h2').textContent='Sala '+info.room.number+' · '+info.members.length+'/4 pessoas';
+  $('character').value=Family.names[info.seat];
+  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=info.members.some(m=>m.seat===seat&&!m.you);}
+  $('companion').disabled=!info.host;
+  setup.querySelectorAll('input[name=difficulty]').forEach(el=>el.disabled=!info.host);
+  startButton.disabled=!connected||!info.host||info.room.status!=='waiting';
+  startButton.textContent=info.host?'Começar com '+(4-info.members.length)+' bot(s)':'Aguardando quem abriu a sala';
+  setStatus(connected?'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando quiser.':'Escolha um personagem livre e converse no chat.'):'Conexão interrompida. Tentando reconectar…');
+  updateLineup();decorateLobby();
+  $('chat-title').textContent='Chat · Sala '+info.room.number;
+  if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
+ }
+ function apply(next){
+  if(info?.room.id===next.room.id&&next.room.revision<info.room.revision)return;
+  const changedRoom=info?.room.id!==next.room.id,previous=state;
+  info=next;connected=true;
+  if(changedRoom){lastMessage=0;unread=0;ended=false;subscribe();}
+  updateChat(next.chat);
+  if(next.state){
+   const sameHand=previous&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
+   const newMove=previous&&next.state.move>previous.move;
+   state=next.state;
+   if(!sameHand||state.turn!==0||state.phase!=='play'){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
+   if($('game').classList.contains('hidden')){if($('modal').open)$('modal').close();showGame();}
+   else render();
+   if(newMove&&state.last)audio.fx(state.winner!==null?'win':state.last.claims?'sequence':state.last.remove?'remove':'place');
+   if(state.winner!==null&&!ended){ended=true;showResult();}
+  }else{
+   if(previous){if($('modal').open)$('modal').close();state=null;selected=-1;paused=false;clearTimeout(timer);stopChat();toggle('game',false);toggle('home',true);toggle('pause',false);nextChat();queueFit();}
+   ended=false;
+  }
+  toggle('continue',false);renderInfo();
+  clearTimeout(botTimer);
+  if(next.host&&next.nextBotAt!==null&&!document.hidden)botTimer=setTimeout(()=>action('tick'),Math.max(250,next.nextBotAt-Date.now()+150));
+ }
+ async function request(type,params={}){
+  const {data:{session},error}=await client.auth.getSession();
+  if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
+  lastToken=session.access_token;
+  const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(20000)});
+  const data=await response.json();if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');return data;
+ }
+ function action(type,params={}){
+  const baseRevision=info?.room.revision;
+  const task=async()=>{
+   try{
+    const data=await request(type,{...params,...(['play','draw','pass','exchange','pdraw','playphase','hit','discard'].includes(type)?{revision:baseRevision}:{})});
+    if(!data.left)apply(data);return true;
+   }catch(error){
+    const message=error.message||'Conexão indisponível.';
+    if(['sync','heartbeat','tick'].includes(type)){connected=false;setStatus('Conexão interrompida. Tentaremos novamente.');}
+    else toast(message);
+    if(type==='chat')$('chat-status').textContent=message;
+    if(!['sync','heartbeat','join'].includes(type))refresh();
+    return false;
+   }
+  };
+  queue=queue.then(task,task);return queue;
+ }
+ function refresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.hidden&&info)action('sync');},180);}
+ function subscribe(){
+  if(channel)client.removeChannel(channel);
+  channel=client.channel('sala-'+info.room.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'seq_rooms',filter:'id=eq.'+info.room.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'seq_chat',filter:'room_id=eq.'+info.room.id},refresh).subscribe(status=>{if(status==='SUBSCRIBED')refresh();});
+ }
+ async function join(){
+  if(joining)return;joining=true;setStatus('Entrando na primeira sala disponível…');startButton.disabled=true;
+  try{
+   if(!window.supabase)throw new Error('A conexão não carregou. Verifique a internet e recarregue a página.');
+   client ||= window.supabase.createClient(ONLINE_CONFIG.url,ONLINE_CONFIG.key);
+   const {data:{session}}=await client.auth.getSession();
+   if(!session){const {error}=await client.auth.signInAnonymously();if(error)throw error;}
+   apply(await request('join'));
+   clearInterval(heartbeatTimer);heartbeatTimer=setInterval(()=>{if(!document.hidden)action('heartbeat');},20000);
+  }catch(e){connected=false;setStatus('Não foi possível entrar: '+e.message+'. Toque em Reconectar.');}
+  finally{joining=false;}
+ }
+ multiplayer={enabled:true,action,decorateLobby,start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
+  menu:()=>{
+   showModal('<h2>Sala '+(info?.room.number||'')+'</h2><p>A partida on-line continua enquanto este menu está aberto. Se sair, um bot assume seu lugar.</p><div class="actions"><button class="primary" id="resume">Voltar à mesa</button><button class="secondary" id="leave-room">Sair da sala</button></div>');
+   $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
+  },result:()=>{
+   if(GAME==='phase10'){phaseResult(info);return;}
+   showModal('<div class="result"><span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
+   if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
+   $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
+  }};
+ $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
+ $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
+ button.onclick=()=>$('chat-input').focus();
+ $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
+ $('reconnect').onclick=join;
+ const originalBrand=$('brand').onclick;$('brand').onclick=async e=>{e.preventDefault();if(!info||await action('leave'))location.assign(location.pathname);};
+ $('play-solo').onclick=async()=>{if(!info||await action('leave'))location.assign(location.pathname+'?game='+GAME+'&solo=1');};
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(botTimer);else if(info)action('heartbeat');});
+ window.addEventListener('online',()=>{if(info)action('heartbeat');else join();});
+ window.addEventListener('pagehide',()=>{if(lastToken&&info)fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+lastToken},body:JSON.stringify({type:'leave',game:GAME,joinStamp:info.joinStamp})}).catch(()=>{});});
+ window.addEventListener('pageshow',e=>{if(e.persisted)join();});
+ join();
+})();
+
+})();}else{(()=>{
 'use strict';
 const E=Sequence,$=id=>document.getElementById(id);
 let multiplayer=null;
@@ -398,7 +667,7 @@ let state=null,selected=-1,timer=null,paused=false,toastTimer;
 const SAVE='sequence-familia-v2',SETTINGS='sequence-audio-v1';
 let prefs={music:true,effects:true,volume:35,track:'assurance',banter:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
-if(!['assurance','bethany'].includes(prefs.track))prefs.track='assurance';
+
 function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 function storageRemove(k){try{localStorage.removeItem(k);}catch{}}
 function saved(){try{const x=JSON.parse(localStorage.getItem(SAVE)||'null');return x&&x.version===2&&x.board?.length===100&&Array.isArray(x.hands)&&x.players?.length===x.hands.length&&x.winner===null?x:null;}catch{return null;}}
@@ -407,43 +676,7 @@ function toast(text){$('toast').textContent=text;$('toast').classList.add('show'
 function save(){if(multiplayer?.enabled)return;if(state?.winner===null)storageSet(SAVE,state);}
 function log(text){state.log.unshift(text);state.log=state.log.slice(0,35);}
 function toggle(id,visible){$(id).classList.toggle('hidden',!visible);}
-const audio={
- ctx:null,bus:null,player:null,track:null,blocked:false,
- init(){
-  try{
-   if(navigator.audioSession)navigator.audioSession.type='playback';
-   if(!this.ctx||this.ctx.state==='closed'){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);}
-   if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
-   this.bus.gain.setTargetAtTime(prefs.volume/100*.25,this.ctx.currentTime,.05);
-   if(this.player)this.player.volume=prefs.volume/100;
-  }catch{}
- },
- tone(freq,length=.3,offset=0,volume=.3,type='sine'){
-  if(!this.ctx||this.ctx.state!=='running')return;
-  const t=this.ctx.currentTime+offset,osc=this.ctx.createOscillator(),gain=this.ctx.createGain();
-  osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.025);gain.gain.exponentialRampToValueAtTime(.0001,t+length);
-  osc.connect(gain);gain.connect(this.bus);osc.start(t);osc.stop(t+length+.02);
- },
- play(){
-  if(!prefs.music||document.hidden){this.stop();return;}
-  try{
-   if(navigator.audioSession)navigator.audioSession.type='playback';
-   if(!this.player){
-    this.player=new Audio();this.player.loop=true;this.player.preload='auto';
-    this.player.setAttribute('playsinline','');
-   }
-   if(this.track!==prefs.track){this.player.src=Hymns.url(prefs.track);this.track=prefs.track;}
-   this.player.volume=prefs.volume/100;
-   // Chamada direta a partir do toque: respeita o desbloqueio de mídia no iOS/Android.
-   this.player.play().then(()=>{this.blocked=false;}).catch(()=>{
-    this.blocked=true;
-    if(prefs.music&&!document.hidden)toast('Toque em ♫ Som → Ativar áudio para ouvir a música.');
-   });
-  }catch{this.blocked=true;}
- },
- stop(){if(this.player)this.player.pause();},
- fx(kind){if(!prefs.effects)return;this.init();const notes=kind==='win'?[523.25,659.25,783.99,1046.5]:kind==='sequence'?[392,523.25,659.25]:kind==='remove'?[220,146.83]:[440,587.33];notes.forEach((f,i)=>this.tone(f,.28,i*.09,.45));}
-};
+const audio=createNightAudio(prefs,toast);
 // Reativa áudio interrompido por bloqueio da tela, chamada ou política de reprodução.
 function unlockAudio(){
  audio.init();
@@ -477,7 +710,7 @@ function fitTable(){
  wrap.style.setProperty('--card-step',step+'px');
  $('hand').style.setProperty('--hand-count',n);
 }
-function queueFit(){requestAnimationFrame(fitTable);}
+function queueFit(){requestAnimationFrame(()=>{fitTable();Speech.place();});}
 window.addEventListener('resize',queueFit);
 window.visualViewport?.addEventListener('resize',queueFit);
 new ResizeObserver(queueFit).observe($('arena'));
@@ -496,6 +729,7 @@ function renderLobby(){
  multiplayer?.decorateLobby();
 }
 function clearSpeech(){
+ Speech.clearBots();
  currentSpeaker='';
  $('conversation').innerHTML='<span class="conversation-idle">'+(prefs.banter?'♠ Duas sequências. Uma família inteira de olho.':'Resenha em silêncio. A concentração agradece.')+'</span>';
  document.querySelectorAll('.speaking').forEach(el=>el.classList.remove('speaking'));
@@ -509,10 +743,10 @@ function nextChat(delay=6000+Math.random()*5000){
   if(generation!==chatGeneration||!talkAllowed())return;
   if($('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}
   if(!sceneBag.length)sceneBag=Family.scenes.map((_,i)=>i).sort(()=>Math.random()-.5);
-  const scene=Family.scenes[sceneBag.pop()];
+  const scene=Family.scenes[sceneBag.pop()].filter(([name])=>!multiplayer?.enabled||!state.players.some(p=>p.name===name&&p.human&&p.online));if(!scene.length){nextChat();return;}
   function line(i){
    if(generation!==chatGeneration||!talkAllowed())return;
-   const [name,text]=scene[i];currentSpeaker=name;
+   const [name,text]=scene[i];currentSpeaker=name;Speech.say(name,text);
    const playing=state.players.some(p=>p.name===name);
    const controlled=state.players[0].name===name;
    $('conversation').innerHTML='<span class="speech-head portrait">'+Family.avatar(name)+'</span><div class="speech-bubble"><b>'+name+'</b>'+(controlled?'<span class="speaker-role">seu personagem</span>':!playing?'<span class="speaker-role">na torcida</span>':'')+'<span>'+escapeHTML(text)+'</span></div>';
@@ -656,34 +890,25 @@ $('rules').onclick=()=>showModal(`<span class="eyebrow">GUIA DA MESA</span><h2>C
 <h3>A família e a resenha</h3><p>Escolha entre Iverson, Ana Paula, Gabriela e Gabriel. Os quatro estão sempre na mesa. As falas do seu personagem são automáticas; as jogadas dele são suas. São 101 cenas aleatórias, com respostas entre os personagens. As falas são apenas humor: não revelam cartas nem orientam jogadas. Use “Resenha” para silenciá-las. Os bots levam cerca de cinco segundos para jogar.</p>
 <h3>Adaptações desta versão digital</h3><p>O jogo exige a compra antes de avançar, evitando a penalidade física por esquecer de comprar. Não há dicas de estratégia entre parceiros. Sequências são reconhecidas automaticamente. Sem jogada legal após a troca permitida, o jogador passa. Se todos ficarem sem jogadas e sem trocas possíveis, a partida empata. No modo solo, o jogo salva neste navegador. On-line, a partida fica na sala: volte pelo mesmo navegador para recuperar seu lugar.</p>
 <p><a href="https://www.jaxgames.com/sequence-game-rules/" target="_blank" rel="noopener">Referência: regras da JAX</a>. Arte própria; adaptação independente, sem vínculo com a marca.</p>`);
-$('sound').onclick=()=>{
- audio.init();
- showModal('<span class="eyebrow">O CLIMA DA MESA</span><h2>Música e sons</h2><p>Harpa Cristã instrumental, com timbres suaves e acompanhamento próprio. Toque em “Ativar áudio” se o celular interromper o som.</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música ambiente</label><label class="field">Trilha<select id="track"><option value="assurance">140 · A Segurança do Crente</option><option value="bethany">187 · Mais Perto, Meu Deus, de Ti</option></select></label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos das jogadas</label><label class="field">Volume <span id="volume-value">'+prefs.volume+'%</span><input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="primary" id="sound-done">Pronto</button></div>');
- $('modal-content').insertAdjacentHTML('beforeend','<details><summary>Créditos das músicas</summary><p>Harpa 140: ASSURANCE, Phoebe P. Knapp (1839–1908), 1873. Harpa 187: BETHANY, Lowell Mason (1792–1872), 1856. Melodias originais em domínio público no Brasil; acompanhamento e síntese próprios, sem letras ou gravações de terceiros.</p><p><a href="https://www.hymnologyarchive.com/blessed-assurance" target="_blank" rel="noopener">ASSURANCE</a> · <a href="https://library.timelesstruths.org/music/Nearer_My_God_to_Thee/" target="_blank" rel="noopener">BETHANY</a> · <a href="https://www.planalto.gov.br/ccivil_03/leis/l9610.htm" target="_blank" rel="noopener">Lei 9.610, art. 41</a></p></details>');
- $('track').value=prefs.track;
- $('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};
- $('track').onchange=e=>{prefs.track=e.target.value;storageSet(SETTINGS,prefs);audio.play();};
- $('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);audio.fx('place');};
- $('volume').oninput=e=>{prefs.volume=Number(e.target.value);$('volume-value').textContent=prefs.volume+'%';storageSet(SETTINGS,prefs);audio.init();};
- $('audio-unlock').onclick=()=>{audio.init();audio.play();};
- $('sound-done').onclick=closeModal;
-};
+$('sound').onclick=()=>{audio.init();showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Música e sons</h2><p>Cinco instrumentais originais, mais animados, em ordem aleatória. Uma música começa assim que a outra termina.</p><p id="now-playing">♫ '+audio.title+'</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música</label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos</label><label class="field">Volume<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="secondary" id="next-song">Próxima música</button><button class="primary" id="sound-done">Pronto</button></div>');$('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};$('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};$('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};$('audio-unlock').onclick=()=>{prefs.music=true;$('music-check').checked=true;audio.init();audio.play();};$('next-song').onclick=()=>{audio.next();$('now-playing').textContent='♫ '+audio.title;};$('sound-done').onclick=closeModal;};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();clearTimeout(timer);stopChat();save();}else{audio.play();schedule();nextChat();queueFit();}});
 window.addEventListener('beforeunload',save);
 
+
+if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>{e.preventDefault();save();location.assign(location.pathname);};
 
 'use strict';
 // O navegador envia intenções; cartas, bots e validação ficam no servidor.
 (()=>{
  const solo=new URLSearchParams(location.search).get('solo')==='1';
  const button=document.createElement('button');button.className='quiet';button.id='room-chat-button';button.textContent=solo?'On-line':'Chat';document.querySelector('.topbar nav').prepend(button);
- if(solo){button.onclick=()=>location.assign(location.pathname);return;}
+ if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
  const setup=$('setup'),startButton=setup.querySelector('button[type=submit]');
  setup.querySelector('h2').textContent='Conectando à família…';
  const note=document.createElement('p');note.id='online-status';note.className='lineup';note.setAttribute('role','status');setup.prepend(note);
  const actions=document.createElement('div');actions.className='online-actions';actions.innerHTML='<button type="button" id="reconnect" class="quiet">Reconectar</button><button type="button" id="play-solo" class="quiet">Só eu e bots</button>';setup.append(actions);
- const panel=document.createElement('dialog');panel.id='room-chat';panel.innerHTML='<div class="chat-heading"><strong id="chat-title">Chat da sala</strong><button class="quiet" id="close-chat" aria-label="Fechar chat">×</button></div><p class="chat-help">Mensagens para todos da sala. A partida continua enquanto você conversa.</p><div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><input id="chat-input" type="text" maxlength="300" placeholder="Mande sua resenha…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit">Enviar</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
- let client,channel,info=null,queue=Promise.resolve(),refreshTimer,botTimer,heartbeatTimer,lastMessage=0,unread=0,ended=false,connected=false,joining=false;
+ const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
+ let lastToken=null,client,channel,info=null,queue=Promise.resolve(),refreshTimer,botTimer,heartbeatTimer,lastMessage=0,unread=0,ended=false,connected=false,joining=false;
  const setStatus=t=>{note.textContent=t;};
  const decorateLobby=()=>{
   if(!info)return;
@@ -696,12 +921,12 @@ window.addEventListener('beforeunload',save);
  const updateChat=messages=>{
   const box=$('chat-messages'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<70;
   const newest=messages.at(-1)?.id||0;
-  if(lastMessage&&newest>lastMessage&&!panel.open)unread+=messages.filter(m=>m.id>lastMessage).length;
-  lastMessage=newest;button.textContent=unread?'Chat ('+unread+')':'Chat';
+  for(const m of messages)if(m.id>lastMessage&&Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);
+  lastMessage=newest;button.textContent='Chat';
   box.replaceChildren();
   if(!messages.length){const p=document.createElement('p');p.className='chat-help';p.textContent='O café está pronto. Só falta alguém puxar assunto.';box.append(p);}
-  for(const m of messages){const row=document.createElement('p'),name=document.createElement('strong'),body=document.createElement('span');name.textContent=m.speaker+': ';body.textContent=m.body;row.append(name,body);box.append(row);}
-  if(nearBottom)box.scrollTop=box.scrollHeight;
+  for(const m of messages.slice(-3)){const row=document.createElement('p'),name=document.createElement('strong'),body=document.createElement('span');name.textContent=m.speaker+': ';body.textContent=m.body;row.append(name,body);box.append(row);}
+  box.scrollTop=box.scrollHeight;requestAnimationFrame(Speech.place);
  };
  function renderInfo(){
   if(!info)return;
@@ -715,7 +940,7 @@ window.addEventListener('beforeunload',save);
   setStatus(connected?'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando quiser.':'Escolha um personagem livre e converse no chat.'):'Conexão interrompida. Tentando reconectar…');
   updateLineup();decorateLobby();
   $('chat-title').textContent='Chat · Sala '+info.room.number;
-  if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+' · DUPLAS';
+  if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
  }
  function apply(next){
   if(info?.room.id===next.room.id&&next.room.revision<info.room.revision)return;
@@ -727,7 +952,7 @@ window.addEventListener('beforeunload',save);
    const sameHand=previous&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
    const newMove=previous&&next.state.move>previous.move;
    state=next.state;
-   if(!sameHand||state.turn!==0||state.phase!=='play')selected=-1;
+   if(!sameHand||state.turn!==0||state.phase!=='play'){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
    if($('game').classList.contains('hidden')){if($('modal').open)$('modal').close();showGame();}
    else render();
    if(newMove&&state.last)audio.fx(state.winner!==null?'win':state.last.claims?'sequence':state.last.remove?'remove':'place');
@@ -743,13 +968,15 @@ window.addEventListener('beforeunload',save);
  async function request(type,params={}){
   const {data:{session},error}=await client.auth.getSession();
   if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
-  const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({type,...params}),signal:AbortSignal.timeout(20000)});
+  lastToken=session.access_token;
+  const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(20000)});
   const data=await response.json();if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');return data;
  }
  function action(type,params={}){
+  const baseRevision=info?.room.revision;
   const task=async()=>{
    try{
-    const data=await request(type,{...params,...(['play','draw','pass','exchange'].includes(type)?{revision:info?.room.revision}:{})});
+    const data=await request(type,{...params,...(['play','draw','pass','exchange','pdraw','playphase','hit','discard'].includes(type)?{revision:baseRevision}:{})});
     if(!data.left)apply(data);return true;
    }catch(error){
     const message=error.message||'Conexão indisponível.';
@@ -782,22 +1009,26 @@ window.addEventListener('beforeunload',save);
  multiplayer={enabled:true,action,decorateLobby,start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
   menu:()=>{
    showModal('<h2>Sala '+(info?.room.number||'')+'</h2><p>A partida on-line continua enquanto este menu está aberto. Se sair, um bot assume seu lugar.</p><div class="actions"><button class="primary" id="resume">Voltar à mesa</button><button class="secondary" id="leave-room">Sair da sala</button></div>');
-   $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.reload();};
+   $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   },result:()=>{
+   if(GAME==='phase10'){phaseResult(info);return;}
    showModal('<div class="result"><span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
    if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
-   $('online-leave').onclick=async()=>{if(await action('leave'))location.reload();};
+   $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   }};
  $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
  $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
- button.onclick=()=>{if(!panel.open)panel.showModal();unread=0;button.textContent='Chat';$('chat-messages').scrollTop=$('chat-messages').scrollHeight;};
- $('close-chat').onclick=()=>panel.close();
+ button.onclick=()=>$('chat-input').focus();
  $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
  $('reconnect').onclick=join;
- $('play-solo').onclick=async()=>{if(!info||await action('leave'))location.assign(location.pathname+'?solo=1');};
+ const originalBrand=$('brand').onclick;$('brand').onclick=async e=>{e.preventDefault();if(!info||await action('leave'))location.assign(location.pathname);};
+ $('play-solo').onclick=async()=>{if(!info||await action('leave'))location.assign(location.pathname+'?game='+GAME+'&solo=1');};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(botTimer);else if(info)action('heartbeat');});
  window.addEventListener('online',()=>{if(info)action('heartbeat');else join();});
+ window.addEventListener('pagehide',()=>{if(lastToken&&info)fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+lastToken},body:JSON.stringify({type:'leave',game:GAME,joinStamp:info.joinStamp})}).catch(()=>{});});
+ window.addEventListener('pageshow',e=>{if(e.persisted)join();});
  join();
 })();
 
+})();}}
 });</script></body></html>

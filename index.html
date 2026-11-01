@@ -653,6 +653,8 @@ installHandDrag();
  if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
  const setup=$('setup'),startButton=setup.querySelector('button[type=submit]');
  setup.querySelector('h2').textContent='Conectando à família…';
+ const characterPrompt=new Option('Escolha seu personagem…','');characterPrompt.disabled=true;$('character').prepend(characterPrompt);$('character').value='';$('character').disabled=true;startButton.disabled=true;
+ updateLineup();
  const note=document.createElement('p');note.id='online-status';note.className='lineup';note.setAttribute('role','status');setup.prepend(note);
  const actions=document.createElement('div');actions.className='online-actions';actions.innerHTML='<button type="button" id="reconnect" class="quiet">Reconectar</button><button type="button" id="play-solo" class="quiet">Só eu e bots</button>';setup.append(actions);
  const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
@@ -679,13 +681,19 @@ installHandDrag();
  function renderInfo(){
   if(!info)return;
   setup.querySelector('h2').textContent='Sala '+info.room.number+' · '+info.members.length+'/4 pessoas';
-  $('character').value=Family.names[info.seat];
-  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=info.members.some(m=>m.seat===seat&&!m.you);}
-  $('companion').disabled=!info.host;
+  const chosen=Number.isInteger(info.seat)&&info.seat>=0&&info.seat<4;
+  const pending=info.members.some(m=>!Number.isInteger(m.seat));
+  $('character').value=chosen?Family.names[info.seat]:'';
+  $('character').disabled=!connected||info.room.status!=='waiting';
+  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=seat<0||info.members.some(m=>m.seat===seat&&!m.you);}
+  $('companion').disabled=!info.host||!chosen;
   setup.querySelectorAll('input[name=difficulty]').forEach(el=>el.disabled=!info.host);
-  startButton.disabled=!connected||!info.host||info.room.status!=='waiting';
-  startButton.textContent=info.host?'Começar com '+(4-info.members.length)+' bot(s)':'Aguardando quem abriu a sala';
-  setStatus(connected?'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando quiser.':'Escolha um personagem livre e converse no chat.'):'Conexão interrompida. Tentando reconectar…');
+  startButton.disabled=!connected||!info.host||!chosen||pending||info.room.status!=='waiting';
+  startButton.textContent=!chosen?'Escolha seu personagem':pending?'Aguardando a escolha dos personagens':info.host?'Começar com '+(4-info.members.length)+' bot(s)':'Aguardando quem abriu a sala';
+  setStatus(!connected?'Conexão interrompida. Tentando reconectar…':!chosen?'Você entrou na sala. Escolha um personagem disponível para jogar.':'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando todos escolherem.':'Converse com a família enquanto aguarda.'));
+  $('chat-input').disabled=!chosen;
+  $('chat-form').querySelector('button').disabled=!chosen;
+  $('chat-input').placeholder=chosen?'Fale com a mesa…':'Escolha seu personagem para conversar…';
   updateLineup();decorateLobby();
   $('chat-title').textContent='Chat · Sala '+info.room.number;
   if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
@@ -764,8 +772,8 @@ installHandDrag();
    if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
    $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   }};
- $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
- $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
+ $('character').onchange=()=>{const seat=Family.names.indexOf($('character').value);if(seat>=0)action('pick',{seat});};
+ $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(info&&connected&&info.room.status==='waiting'&&el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
  button.onclick=()=>$('chat-input').focus();
  $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
  $('reconnect').onclick=join;
@@ -835,6 +843,7 @@ window.visualViewport?.addEventListener('resize',queueFit);
 new ResizeObserver(queueFit).observe($('arena'));
 function updateLineup(){
  const name=$('character').value;
+ if(!name){$('lineup').textContent='Escolha um dos personagens disponíveis para entrar na mesa.';renderLobby();return;}
  for(const op of $('companion').options)op.disabled=op.value===name;
  if($('companion').value===name)$('companion').value=Family.names.find(n=>n!==name);
  const rivals=Family.names.filter(n=>n!==name&&n!==$('companion').value);
@@ -1039,6 +1048,8 @@ if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>
  if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
  const setup=$('setup'),startButton=setup.querySelector('button[type=submit]');
  setup.querySelector('h2').textContent='Conectando à família…';
+ const characterPrompt=new Option('Escolha seu personagem…','');characterPrompt.disabled=true;$('character').prepend(characterPrompt);$('character').value='';$('character').disabled=true;startButton.disabled=true;
+ updateLineup();
  const note=document.createElement('p');note.id='online-status';note.className='lineup';note.setAttribute('role','status');setup.prepend(note);
  const actions=document.createElement('div');actions.className='online-actions';actions.innerHTML='<button type="button" id="reconnect" class="quiet">Reconectar</button><button type="button" id="play-solo" class="quiet">Só eu e bots</button>';setup.append(actions);
  const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
@@ -1065,13 +1076,19 @@ if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>
  function renderInfo(){
   if(!info)return;
   setup.querySelector('h2').textContent='Sala '+info.room.number+' · '+info.members.length+'/4 pessoas';
-  $('character').value=Family.names[info.seat];
-  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=info.members.some(m=>m.seat===seat&&!m.you);}
-  $('companion').disabled=!info.host;
+  const chosen=Number.isInteger(info.seat)&&info.seat>=0&&info.seat<4;
+  const pending=info.members.some(m=>!Number.isInteger(m.seat));
+  $('character').value=chosen?Family.names[info.seat]:'';
+  $('character').disabled=!connected||info.room.status!=='waiting';
+  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=seat<0||info.members.some(m=>m.seat===seat&&!m.you);}
+  $('companion').disabled=!info.host||!chosen;
   setup.querySelectorAll('input[name=difficulty]').forEach(el=>el.disabled=!info.host);
-  startButton.disabled=!connected||!info.host||info.room.status!=='waiting';
-  startButton.textContent=info.host?'Começar com '+(4-info.members.length)+' bot(s)':'Aguardando quem abriu a sala';
-  setStatus(connected?'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando quiser.':'Escolha um personagem livre e converse no chat.'):'Conexão interrompida. Tentando reconectar…');
+  startButton.disabled=!connected||!info.host||!chosen||pending||info.room.status!=='waiting';
+  startButton.textContent=!chosen?'Escolha seu personagem':pending?'Aguardando a escolha dos personagens':info.host?'Começar com '+(4-info.members.length)+' bot(s)':'Aguardando quem abriu a sala';
+  setStatus(!connected?'Conexão interrompida. Tentando reconectar…':!chosen?'Você entrou na sala. Escolha um personagem disponível para jogar.':'Você é '+Family.names[info.seat]+'. '+(info.host?'Espere os convidados e inicie quando todos escolherem.':'Converse com a família enquanto aguarda.'));
+  $('chat-input').disabled=!chosen;
+  $('chat-form').querySelector('button').disabled=!chosen;
+  $('chat-input').placeholder=chosen?'Fale com a mesa…':'Escolha seu personagem para conversar…';
   updateLineup();decorateLobby();
   $('chat-title').textContent='Chat · Sala '+info.room.number;
   if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
@@ -1150,8 +1167,8 @@ if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>
    if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
    $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   }};
- $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
- $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
+ $('character').onchange=()=>{const seat=Family.names.indexOf($('character').value);if(seat>=0)action('pick',{seat});};
+ $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(info&&connected&&info.room.status==='waiting'&&el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
  button.onclick=()=>$('chat-input').focus();
  $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
  $('reconnect').onclick=join;

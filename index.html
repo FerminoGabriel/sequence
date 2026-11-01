@@ -38,6 +38,16 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 /* Organização da mão e prévia do curinga móvel. */
 .phase-hand{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.phase-hand:active{cursor:grabbing}.phase-hand .p-card{pointer-events:none}.hand-drag-source{opacity:.25!important}.hand-card.hand-drag-ghost{position:fixed!important;z-index:1000!important;pointer-events:none!important;transform:rotate(0)!important;margin:0!important;opacity:.95;box-shadow:0 12px 28px #0009!important;transition:none!important}.hand-drop-marker{position:fixed;width:3px;border-radius:3px;z-index:999;background:var(--gold);box-shadow:0 0 9px var(--gold);pointer-events:none}.run-choices{display:flex;flex-direction:column;gap:12px}.run-choice{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;padding:12px}.run-choice strong{font-size:12px}.run-preview{display:flex;gap:5px;flex-wrap:wrap}.run-preview-card{display:flex;flex-direction:column;align-items:center;gap:4px}.run-preview-card .p-card.mini{width:30px;height:42px;font-size:21px;margin:0}.run-preview-card>small{font-size:8px;line-height:1;color:var(--gold)}.run-preview-card .p-card small{font-size:7px}
 @media(max-width:600px){.run-preview{gap:3px}.run-preview-card .p-card.mini{width:25px;height:35px;font-size:18px}.run-choice{padding:9px}.phase-game .hand-meta{font-size:6px}}
+
+/* Sequence: ficha à direita, valor e naipe sempre visíveis à esquerda. */
+.cell.occupied .rank,.cell.occupied .suit{position:absolute;left:3%;width:43%;text-align:center;z-index:1;pointer-events:none}
+.cell.occupied .rank{top:8%;font-size:clamp(7px,2.65cqw,18px)}
+.cell.occupied .suit{bottom:5%;font-size:clamp(8px,3cqw,20px)}
+.cell .chip{width:45%;right:4%;top:50%;transform:translateY(-50%);border-width:2px;font-size:clamp(6px,1.8cqw,13px);pointer-events:none}
+.cell .chip.protected{box-shadow:0 0 0 1px var(--gold),0 2px 3px #0005}
+.jack-eyes{display:flex;justify-content:center;gap:2px;height:12px;margin-top:1px;flex-shrink:0}
+.jack-eyes svg{width:16px;height:12px;display:block}
+@media(max-width:600px),(max-height:620px){.jack-eyes{height:9px;gap:1px}.jack-eyes svg{width:12px;height:9px}}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head><body>
@@ -544,7 +554,7 @@ function renderLobby(){$('family-lobby').innerHTML=Family.names.map(n=>'<div cla
 function updateLineup(){$('lineup').textContent='Cada um por si · 10 fases · menos pontos no desempate.';renderLobby();}
 function clearSpeech(){Speech.clearBots();}
 function stopChat(){clearTimeout(chatTimer);chatGeneration++;clearSpeech();}
-function nextChat(delay=7000){clearTimeout(chatTimer);if(!prefs.banter||document.hidden)return;const gen=chatGeneration;chatTimer=setTimeout(()=>{if(gen!==chatGeneration)return;if(!state||$('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}if(paused||state.winner!==null){nextChat();return;}const pool=PhaseScenes.filter(scene=>scene.some(([n])=>!multiplayer?.enabled||!state.players.some(p=>p.name===n&&p.human&&p.online)));if(!pool.length){nextChat(15000);return;}const scene=pool[Math.floor(Math.random()*pool.length)].filter(([n])=>!multiplayer?.enabled||!state.players.some(p=>p.name===n&&p.human&&p.online));let i=0;function speak(){if(gen!==chatGeneration)return;const [name,text]=scene[i++];Speech.say(name,text);chatTimer=setTimeout(()=>i<scene.length?speak():nextChat(4500+Math.random()*5000),13000);}speak();},delay);}
+function nextChat(delay=7000){clearTimeout(chatTimer);if(!prefs.banter||document.hidden)return;const gen=chatGeneration;chatTimer=setTimeout(()=>{if(gen!==chatGeneration)return;if(!state||$('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}if(paused||state.winner!==null){nextChat();return;}const scene=PhaseScenes[Math.floor(Math.random()*PhaseScenes.length)];let i=0;function speak(){if(gen!==chatGeneration)return;const [name,text]=scene[i++];Speech.say(name,text);chatTimer=setTimeout(()=>i<scene.length?speak():nextChat(4500+Math.random()*5000),13000);}speak();},delay);}
 function card(c,mini=false){return '<span class="p-card pc-'+c[0]+(mini?' mini':'')+'" title="'+E.label(c)+'"><small>'+({R:'●',B:'◆',G:'♣',Y:'★',W:'✦',S:'⊘'}[c[0]])+'</small><b>'+(c==='W'?'✦':c==='S'?'⊘':E.num(c))+'</b></span>';}
 function renderPeople(){const seat=(p,i,pos)=>'<div class="player '+pos+(state.turn===i?' active':'')+'" data-speaker="'+p.name+'">'+portrait(p.name)+'<div class="nameplate"><strong>'+p.name+'</strong><small>Fase '+state.progress[i]+' · '+state.scores[i]+' pts</small><small>'+(state.handCounts?.[i]??state.hands[i].length)+' cartas'+(state.skips[i]?' · ⊘ pula':multiplayer?.enabled?(p.human&&p.online?' · on-line':' · bot'):' · bot')+'</small></div></div>';$('players').innerHTML=state.players.slice(1).map((p,k)=>seat(p,k+1,['seat-left','seat-top','seat-right'][k])).join('');$('human-seat').dataset.speaker=state.players[0].name;$('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+state.players[0].name+'</strong><small>Fase '+state.progress[0]+' · '+state.scores[0]+' pts</small></div>';}
 function render(){if(!state)return;const my=state.turn===0&&state.phase==='play'&&!paused;renderPeople();$('game-mode').textContent='PHASE 10 · RODADA '+state.round;$('score').textContent='Sua fase '+state.progress[0]+'/10';$('deck-count').textContent=(state.deckCount??state.deck.length)+' cartas';$('hand-count').textContent=state.hands[0].length+' cartas';$('phase-goal').textContent=state.laid[0].length?(state.turn===0&&state.laidThisTurn?'Fase baixada! Descarte; os encaixes ficam para sua próxima vez.':'Fase baixada! Encaixe cartas ou reorganize um curinga.'):'Fase '+state.progress[0]+': '+E.descriptions[state.progress[0]-1];
@@ -844,7 +854,7 @@ function nextChat(delay=6000+Math.random()*5000){
   if(generation!==chatGeneration||!talkAllowed())return;
   if($('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}
   if(!sceneBag.length)sceneBag=Family.scenes.map((_,i)=>i).sort(()=>Math.random()-.5);
-  const scene=Family.scenes[sceneBag.pop()].filter(([name])=>!multiplayer?.enabled||!state.players.some(p=>p.name===name&&p.human&&p.online));if(!scene.length){nextChat();return;}
+  const scene=Family.scenes[sceneBag.pop()];if(!scene.length){nextChat();return;}
   function line(i){
    if(generation!==chatGeneration||!talkAllowed())return;
    const [name,text]=scene[i];currentSpeaker=name;Speech.say(name,text);
@@ -858,18 +868,29 @@ function nextChat(delay=6000+Math.random()*5000){
   line(0);
  },delay);
 }
+// A equipe do jogador que iniciou a partida mantém o azul em todos os aparelhos.
+function teamColor(team){
+ if(!multiplayer?.enabled)return team;
+ const anchor=state.players.find(p=>p.name===state.config.name)||state.players.find(p=>p.name==='Iverson');
+ return anchor?(team===anchor.team?0:1):team;
+}
+function jackEyes(c){
+ if(!E.wild(c)&&!E.remove(c))return '';
+ const eye='<svg viewBox="0 0 24 16" aria-hidden="true"><path d="M1 8Q12 -5 23 8Q12 21 1 8Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="8" r="3.5" fill="currentColor"/></svg>';
+ return '<span class="jack-eyes" aria-hidden="true">'+eye+(E.wild(c)?eye:'')+'</span>';
+}
 function renderPeople(){
  const seat=(pl,i,pos)=>{
   const female=pl.name==='Ana Paula'||pl.name==='Gabriela';
   const role=i===0?'Você':pl.team===0?(female?'Sua parceira':'Seu parceiro'):(female?'Adversária':'Adversário');
   const last=state.discards[i].at(-1);
-  return '<div class="player '+pos+' t'+pl.team+(state.turn===i?' active':'')+(currentSpeaker===pl.name?' speaking':'')+'" data-speaker="'+escapeHTML(pl.name)+'">'+portrait(pl.name)+'<div class="nameplate"><strong><span class="team-mark">'+(pl.team===0?'●':'◆')+'</span>'+escapeHTML(pl.name)+'</strong><small>'+role+(multiplayer?.enabled?(pl.human?(pl.online?' · on-line':' · bot temporário'):' · bot'):'')+(state.turn===i?' · sua vez':'')+'</small>'+(last?'<span class="last-card" title="Última carta: '+E.fullLabel(last)+'">'+E.label(last)+'</span>':'')+(state.turn===i&&i>0&&state.phase==='play'&&(!multiplayer?.enabled||!pl.human||!pl.online)?'<span class="turn-progress"><i></i></span>':'')+'</div></div>';
+  return '<div class="player '+pos+' t'+teamColor(pl.team)+(state.turn===i?' active':'')+(currentSpeaker===pl.name?' speaking':'')+'" data-speaker="'+escapeHTML(pl.name)+'">'+portrait(pl.name)+'<div class="nameplate"><strong><span class="team-mark">'+(teamColor(pl.team)===0?'●':'◆')+'</span>'+escapeHTML(pl.name)+'</strong><small>'+role+(multiplayer?.enabled?(pl.human?(pl.online?' · on-line':' · bot temporário'):' · bot'):'')+(state.turn===i?' · sua vez':'')+'</small>'+(last?'<span class="last-card" title="Última carta: '+E.fullLabel(last)+'">'+E.label(last)+'</span>':'')+(state.turn===i&&i>0&&state.phase==='play'&&(!multiplayer?.enabled||!pl.human||!pl.online)?'<span class="turn-progress"><i></i></span>':'')+'</div></div>';
  };
  $('players').innerHTML=state.players.slice(1).map((pl,k)=>seat(pl,k+1,state.players.length===2?'seat-top':k===0?'seat-left':k===1?'seat-top':'seat-right')).join('');
- $('human-seat').className='human-seat t0'+(state.turn===0?' active':'');
+ $('human-seat').className='human-seat t'+teamColor(0)+(state.turn===0?' active':'');
  $('human-seat').dataset.speaker=state.players[0].name;
  $('human-seat').classList.toggle('speaking',currentSpeaker===state.players[0].name);
- $('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+escapeHTML(state.players[0].name)+'</strong><small><span class="team-mark">●</span>Sua equipe</small></div>';
+ $('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+escapeHTML(state.players[0].name)+'</strong><small><span class="team-mark">'+(teamColor(0)===0?'●':'◆')+'</span>Sua equipe</small></div>';
  const absent=Family.names.filter(n=>!state.players.some(p=>p.name===n));
  $('spectators').innerHTML=absent.map(n=>'<div class="spectator '+(currentSpeaker===n?'speaking':'')+'" data-speaker="'+n+'" title="'+n+' · na torcida">'+portrait(n)+'<span>Torcida</span></div>').join('');
 }
@@ -892,13 +913,13 @@ function render(){
  $('board').innerHTML=E.BOARD.map((c,i)=>{
   const owner=state.board[i],protectedChip=E.locked(state,i),r=Math.floor(i/10)+1,col=i%10+1;
   const accessible='Linha '+r+', coluna '+col+': '+E.fullLabel(c)+(owner!==null?', ficha '+(owner===0?'da sua equipe':'adversária'):'')+(protectedChip?', protegida':'')+(legal.includes(i)?', jogada disponível':'');
-  return '<button type="button" class="cell '+(/[HD]$/.test(c)?'red ':'')+(c==='*'?'corner ':'')+(owner!==null?'occupied ':'')+(legal.includes(i)?'legal ':'')+(state.last?.index===i?'last':'')+'" data-cell="'+i+'" aria-label="'+accessible+'" aria-disabled="'+!legal.includes(i)+'">'+(c==='*'?'✦<small>LIVRE</small>':'<span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span>')+(owner!==null?'<span class="chip t'+owner+(protectedChip?' protected':'')+'">'+(protectedChip?'★':owner===0?'●':'◆')+'</span>':'')+'</button>';
+  return '<button type="button" class="cell '+(/[HD]$/.test(c)?'red ':'')+(c==='*'?'corner ':'')+(owner!==null?'occupied ':'')+(legal.includes(i)?'legal ':'')+(state.last?.index===i?'last':'')+'" data-cell="'+i+'" aria-label="'+accessible+'" aria-disabled="'+!legal.includes(i)+'">'+(c==='*'?'✦<small>LIVRE</small>':'<span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span>')+(owner!==null?'<span class="chip t'+teamColor(owner)+(protectedChip?' protected':'')+'">'+(protectedChip?'★':teamColor(owner)===0?'●':'◆')+'</span>':'')+'</button>';
  }).join('');
- $('score').innerHTML=[0,1].map(t=>'<div class="score-row"><span class="'+(t===0?'blue':'green')+'">'+(t===0?(state.config.count===4?'Sua dupla':'Você'):(state.config.count===4?'Dupla rival':escapeHTML(state.players[1].name)))+'</span><div class="score-dots" aria-label="'+state.sequences[t].length+' de 2 sequências">'+[0,1].map(n=>'<b class="score-dot '+(state.sequences[t].length>n?'filled':'')+'">'+(state.sequences[t].length>n?'★':'○')+'</b>').join('')+'</div></div>').join('');
+ $('score').innerHTML=[0,1].map(t=>'<div class="score-row"><span class="'+(teamColor(t)===0?'blue':'green')+'">'+(t===0?(state.config.count===4?'Sua dupla':'Você'):(state.config.count===4?'Dupla rival':escapeHTML(state.players[1].name)))+'</span><div class="score-dots" aria-label="'+state.sequences[t].length+' de 2 sequências">'+[0,1].map(n=>'<b class="score-dot '+(state.sequences[t].length>n?'filled':'')+'">'+(state.sequences[t].length>n?'★':'○')+'</b>').join('')+'</div></div>').join('');
  $('deck-count').textContent=(state.deckCount??state.deck.length)+' cartas';
  $('history').innerHTML=state.log.map(l=>'<li>'+escapeHTML(l)+'</li>').join('');
  $('hand-count').textContent=state.hands[0].length+' cartas';
- $('hand').innerHTML=state.hands[0].map((c,i)=>{const offset=i-(state.hands[0].length-1)/2;return '<button type="button" style="--card-index:'+i+';--fan-angle:'+(offset*3)+'deg;--fan-y:'+(Math.abs(offset)*2)+'px" class="hand-card '+(/[HD]$/.test(c)?'red ':'')+(i===selected?'selected ':'')+(E.dead(state,c)?'dead':'')+'" data-card="'+i+'" aria-label="'+E.fullLabel(c)+(E.wild(c)?', colocar ficha':E.remove(c)?', remover ficha':E.dead(state,c)?', carta morta':'')+'" aria-pressed="'+(i===selected)+'" '+(!myTurn?'disabled':'')+'><span class="corner-rank">'+E.rank(c)+E.suits[E.suit(c)]+'</span><span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span><span class="card-tag">'+(E.wild(c)?'COLOCAR':E.remove(c)?'REMOVER':E.dead(state,c)?'MORTA':'')+'</span></button>';}).join('');
+ $('hand').innerHTML=state.hands[0].map((c,i)=>{const offset=i-(state.hands[0].length-1)/2;return '<button type="button" style="--card-index:'+i+';--fan-angle:'+(offset*3)+'deg;--fan-y:'+(Math.abs(offset)*2)+'px" class="hand-card '+(/[HD]$/.test(c)?'red ':'')+(i===selected?'selected ':'')+(E.dead(state,c)?'dead':'')+'" data-card="'+i+'" aria-label="'+E.fullLabel(c)+(E.wild(c)?', colocar ficha':E.remove(c)?', remover ficha':E.dead(state,c)?', carta morta':'')+'" aria-pressed="'+(i===selected)+'" '+(!myTurn?'disabled':'')+'><span class="corner-rank">'+E.rank(c)+E.suits[E.suit(c)]+'</span><span class="rank">'+E.rank(c)+'</span><span class="suit">'+E.suits[E.suit(c)]+'</span>'+jackEyes(c)+'<span class="card-tag">'+(E.wild(c)?'COLOCAR':E.remove(c)?'REMOVER':E.dead(state,c)?'MORTA':'')+'</span></button>';}).join('');
  $('hand-title').textContent='SUAS CARTAS';
  $('turn-label').textContent=state.winner!==null?'PARTIDA ENCERRADA':paused?'PAUSA':state.turn===0?'SUA VEZ':'VEZ DE '+p.name.toUpperCase();
  let title='Escolha uma carta',status='Depois, toque em uma casa iluminada para jogar.';

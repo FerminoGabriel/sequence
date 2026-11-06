@@ -68,6 +68,16 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 .result:has(.finale-stage) .result-icon{display:none}.result:has(.finale-stage) h2{font-size:24px;margin:6px 0}.result:has(.finale-stage) p{margin:8px 0}.result:has(.finale-stage) .actions{margin-top:12px}
 @media(max-width:480px){.finale-stage{gap:7px;padding:18px 4px 10px}.finale-team>strong{font-size:11px}.finale-person figcaption{font-size:9px}.finale-team>small{font-size:9px}.finale-person{flex-basis:64px}}
 @media(prefers-reduced-motion:reduce){.finale-stage *{animation:none!important}.finale-tear{opacity:1}.finale-firework i{opacity:.65;transform:rotate(var(--ray)) translateY(-35px)}}
+
+.delay-reminder-layer{position:fixed;inset:0;z-index:30;pointer-events:none}
+.delay-complaint{background:#fff1cd;border:2px solid #e4a540;max-width:min(205px,29vw);font-size:11px;z-index:2}
+.delay-complaint:after{border-top-color:#fff1cd}.delay-complaint b{color:#8a471b}
+.delay-slap{position:absolute;width:48px;height:54px;margin:-27px 0 0 -24px;transform-origin:50% 80%;animation:delay-table-slap 1.5s ease-in-out 2;filter:drop-shadow(0 3px 3px #0006)}
+.delay-slap svg{width:100%;height:100%}.delay-slap i{position:absolute;left:10px;top:38px;font:bold 13px system-ui;color:#fff1bc;text-shadow:1px 1px 2px #000;animation:delay-slap-impact 1.5s ease-out 2}
+@keyframes delay-table-slap{0%{opacity:0;transform:translate(var(--slap-x),var(--slap-y)) rotate(-25deg) scale(.6)}20%{opacity:1}48%{transform:translate(0,-14px) rotate(-15deg)}58%,65%{opacity:1;transform:translate(0,0) rotate(9deg) scale(1.12)}80%{transform:translate(0,-10px) rotate(-10deg)}100%{opacity:0;transform:translate(0,0)}}
+@keyframes delay-slap-impact{0%,50%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1)}}
+@media(max-width:600px){.delay-complaint{max-width:30vw;font-size:10px;padding:7px}.delay-complaint b{font-size:9px}.delay-slap{width:38px;height:43px}}
+@media(prefers-reduced-motion:reduce){.delay-slap,.delay-slap i{animation:none}.delay-slap{opacity:1}}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head><body>
@@ -538,6 +548,52 @@ function createNightAudio(prefs,onError=()=>{}){
  stop(){this.player?.pause();},fx(kind){if(!prefs.effects)return;this.init();(kind==='win'?[523,659,784,1047]:kind==='sequence'?[392,523,659]:[440,587]).forEach((f,i)=>this.tone(f,.25,i*.085,.35));},get title(){return Hymns.tracks[this.track]?.title||'Playlist aleatória';}};return audio;
 }
 
+// Cobrança de demora independente da resenha e das preferências de som.
+function createDelayReminder(read){
+ const phrases={
+ 'Iverson':['Está valendo a honra, não uma aposentadoria! Joga!','Minha entrada no cabelo aumentou esperando essa carta!','Pode bater na mesa? Porque na carta ninguém bate!','O churrasco já ficou pronto e essa jogada ainda está crua!','Eu trouxe experiência, mas a paciência ficou em casa!'],
+ 'Ana Paula':['Até eu terminar a louça essa carta sai?','Essa mesa é de jogo, não é sala de espera!','Já dava para fazer o almoço e guardar as panelas!','Vamos, família! Essa carta não vai se jogar sozinha!','Se demorar mais, eu distribuo tarefa doméstica!'],
+ 'Gabriela':['Pai, mãe… alguém confere se a vez foi por correio?','Senhor e senhora, acho que essa carta entrou de férias!','Amor, até escolher o jantar foi mais rápido que isso!','Eu já cresci, me formei e essa jogada não saiu!','O suspense está lindo, mas a família quer jogar!'],
+ 'Gabriel':['Princesa, demora assim ou travou no tutorial?','Senhor Iverson, pode pedir ajuda dos universitários?','Senhora Ana Paula, dá tempo de fazer um cafezinho?','Sou iniciante, mas já aprendi a esperar profissionalmente!','Essa carta precisa de senha? Eu não sabia dessa regra!']
+ };
+ const bags={};const layer=document.createElement('div');layer.className='delay-reminder-layer';layer.setAttribute('aria-live','polite');document.body.append(layer);
+ let signature='',elapsed=0,last=Date.now(),clearTimer;
+ const clear=()=>{clearTimeout(clearTimer);layer.replaceChildren();};
+ function complain(s){
+  clear();const board=document.querySelector('#board')||document.querySelector('#phase-table'),br=board?.getBoundingClientRect();
+  const others=s.players.filter((_,i)=>i!==s.turn);
+  others.forEach((p,i)=>{
+   const anchor=[...document.querySelectorAll('[data-speaker]')].find(el=>el.dataset.speaker===p.name&&el.getBoundingClientRect().width);
+   if(!anchor)return;const a=anchor.getBoundingClientRect();
+   if(!bags[p.name]?.length)bags[p.name]=[...phrases[p.name]||['Vamos jogar!']].sort(()=>Math.random()-.5);
+   const bubble=document.createElement('div');bubble.className='avatar-speech delay-complaint';
+   const title=document.createElement('b'),body=document.createElement('span');title.textContent=p.name+' · toc, toc!';body.textContent=bags[p.name].pop();bubble.append(title,body);layer.append(bubble);
+   const b=bubble.getBoundingClientRect(),left=Math.max(7,Math.min(innerWidth-b.width-7,a.left+a.width/2-b.width/2));
+   bubble.style.left=left+'px';bubble.style.top=Math.max(48,Math.min(innerHeight-b.height-8,a.top-b.height-12))+'px';bubble.style.setProperty('--tail',Math.max(12,Math.min(b.width-12,a.left+a.width/2-left))+'px');
+   if(br&&br.width){
+    const x=br.left+br.width*(.2+i*.3),y=br.top+br.height*(i===1?.18:.55);
+    const hand=document.createElement('span');hand.className='delay-slap';hand.setAttribute('aria-hidden','true');hand.style.left=x+'px';hand.style.top=y+'px';hand.style.setProperty('--slap-x',(a.left+a.width/2-x)+'px');hand.style.setProperty('--slap-y',(a.top+a.height/2-y)+'px');
+    hand.innerHTML='<svg viewBox="0 0 64 72"><path d="M19 67L17 47L5 32Q3 25 9 24L20 34L17 9Q17 3 23 4L28 27L28 5Q30 0 35 4L37 26L40 7Q44 3 47 8L46 30L51 17Q56 14 58 20L54 46Q52 57 45 65L43 70Z" fill="#f4c6a0" stroke="#885b43" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 43Q35 35 46 42" fill="none" stroke="#bd8968" stroke-width="2"/></svg><i>TOC!</i>';
+    layer.append(hand);
+   }
+  });
+  clearTimer=setTimeout(clear,10000);
+ }
+ setInterval(()=>{
+  const now=Date.now(),delta=now-last;last=now;const {state:s,online,paused}=read();
+  if(!s||s.winner!==null||!['play','draw'].includes(s.phase)||document.getElementById('game')?.classList.contains('hidden')){signature='';elapsed=0;clear();return;}
+  const p=s.players[s.turn];
+  const human=online?p.human:s.turn===0;
+  if(!human){signature='';elapsed=0;clear();return;}
+  const key=[s.round||0,p.name,s.phase,s.move].join('|');
+  if(signature!==key){signature=key;elapsed=0;clear();return;}
+  if(!online&&paused)return;
+  elapsed+=delta;
+  if(elapsed>=30000&&!document.hidden){elapsed=0;complain(s);}
+ },500);
+ window.addEventListener('resize',clear);window.addEventListener('pagehide',clear);
+}
+
 const GAME=new URLSearchParams(location.search).get('game');
 function nightHub(){
  document.body.classList.add('hub-body');document.querySelector('main').innerHTML='<section class="night-hub"><div class="hub-intro"><span class="eyebrow">A MELHOR PARTE DO DIA COMEÇA AQUI</span><h1>Noite de <em>Jogos.</em></h1><p>Puxe uma cadeira. A família já está com as cartas na mão.</p></div><div class="game-choices"><a class="game-choice sequence-choice" href="?game=sequence"><div class="choice-art sequence-art"><div class="mini-board">'+Array.from({length:25},(_,i)=>'<i class="'+([0,6,12,18,24].includes(i)?'gold-chip':i%7===0?'blue-chip':'')+'">'+['♠','♥','♦','♣'][i%4]+'</i>').join('')+'</div></div><div class="choice-copy"><span class="eyebrow">ESTRATÉGIA EM DUPLA</span><h2>Sequence</h2><p>Conecte cinco. Bloqueie o rival.<br>Defenda a honra da sua dupla.</p><span class="choice-enter">Sentar à mesa <b>↗</b></span></div></a><a class="game-choice phase-choice" href="?game=phase10"><div class="choice-art phase-art"><span class="show-card sc-red">7</span><span class="show-card sc-blue">8</span><span class="show-card sc-gold">9</span><span class="show-card sc-green">10</span></div><div class="choice-copy"><span class="eyebrow">DEZ FASES. MIL DESCULPAS.</span><h2>Phase 10</h2><p>Monte sua fase. Esvazie a mão.<br>Hoje é cada um por si.</p><span class="choice-enter">Entrar na rodada <b>↗</b></span></div></a></div><div class="hub-family">'+Family.names.map(n=>'<div data-intro="'+n+'">'+Family.avatar(n)+'<span>'+n+'</span></div>').join('')+'<p>Quatro personagens.<br><strong>Resenha sem limite.</strong></p></div><p class="hub-foot">1–4 pessoas · bots nas vagas · chat na mesa</p></section>';
@@ -656,6 +712,8 @@ function installHandDrag(){
  hand.addEventListener('keydown',e=>{const button=e.target.closest('[data-hand-id]');if(!button||!e.altKey||!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const id=button.dataset.handId,at=phaseHandOrder.items.findIndex(x=>x.id===id);phaseHandOrder.move(id,at+(e.key==='ArrowLeft'?-1:1));renderPhaseHand();hand.querySelector('[data-hand-id="'+id+'"]')?.focus();});
 }
 installHandDrag();
+
+createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
 
 'use strict';
 // O navegador envia intenções; cartas, bots e validação ficam no servidor.
@@ -1058,6 +1116,8 @@ window.addEventListener('beforeunload',save);
 
 
 if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>{e.preventDefault();save();location.assign(location.pathname);};
+
+createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
 
 'use strict';
 // O navegador envia intenções; cartas, bots e validação ficam no servidor.

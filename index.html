@@ -56,6 +56,18 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 .jack-eyes{display:flex;justify-content:center;gap:2px;height:12px;margin-top:1px;flex-shrink:0}
 .jack-eyes svg{width:16px;height:12px;display:block}
 @media(max-width:600px),(max-height:620px){.jack-eyes{height:9px;gap:1px}.jack-eyes svg{width:12px;height:9px}}
+
+/* Final da partida: SVGs próprios, fogos e reações das duas duplas. */
+.finale-stage{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:24px 5px 14px;margin:0 0 14px;overflow:hidden;border-radius:14px;background:radial-gradient(ellipse at 28% 0,#66532555,transparent 65%),#111b2a}
+.finale-team{position:relative;z-index:1;min-width:0}.finale-team>strong{font-size:13px;color:#f4d48a;display:block}.finale-losers>strong{color:#b1d8ec}.finale-team>small{font-size:10px;line-height:1.4;color:#c3ccdb;display:block;margin-top:6px}.finale-cast{display:flex;justify-content:center;gap:5px}.finale-person{margin:12px 0 0;min-width:0;flex:0 1 86px}.finale-head{width:100%;transform-origin:50% 85%}.finale-head svg{display:block;width:100%;height:auto}.finale-person figcaption{font-size:11px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}.finale-person.cheer .finale-head{animation:finale-cheer .9s ease-in-out var(--person-delay) 10}.finale-person.cry .finale-head{animation:finale-sob 1.3s ease-in-out var(--person-delay) 7}.finale-tear{animation:finale-tears 1.25s ease-in infinite}.finale-tear.tear-right{animation-delay:.45s}
+.finale-fireworks{position:absolute;inset:0;pointer-events:none;z-index:0}.finale-firework{position:absolute;left:var(--burst-x);top:var(--burst-y);color:var(--burst-color)}.finale-firework i{position:absolute;display:block;width:3px;height:3px;border-radius:50%;background:currentColor;box-shadow:0 0 5px currentColor;opacity:0;animation:finale-burst 2.2s ease-out var(--burst-delay) 4}
+@keyframes finale-cheer{0%,100%{transform:translateY(0) rotate(-4deg)}45%{transform:translateY(-10px) rotate(5deg)}70%{transform:translateY(-3px) rotate(0)}}
+@keyframes finale-sob{0%,100%{transform:rotate(-5deg) translateY(2px)}40%{transform:rotate(3deg) translateY(5px)}60%{transform:rotate(-2deg) translateY(3px)}}
+@keyframes finale-tears{0%{opacity:0;transform:translateY(0)}20%{opacity:1}85%,100%{opacity:0;transform:translateY(28px)}}
+@keyframes finale-burst{0%{opacity:0;transform:rotate(var(--ray)) translateY(0) scale(.3)}12%{opacity:1}65%{opacity:.8;transform:rotate(var(--ray)) translateY(-54px) scale(1.2)}100%{opacity:0;transform:rotate(var(--ray)) translateY(-72px) scale(.3)}}
+.result:has(.finale-stage) .result-icon{display:none}.result:has(.finale-stage) h2{font-size:24px;margin:6px 0}.result:has(.finale-stage) p{margin:8px 0}.result:has(.finale-stage) .actions{margin-top:12px}
+@media(max-width:480px){.finale-stage{gap:7px;padding:18px 4px 10px}.finale-team>strong{font-size:11px}.finale-person figcaption{font-size:9px}.finale-team>small{font-size:9px}.finale-person{flex-basis:64px}}
+@media(prefers-reduced-motion:reduce){.finale-stage *{animation:none!important}.finale-tear{opacity:1}.finale-firework i{opacity:.65;transform:rotate(var(--ray)) translateY(-35px)}}
 </style>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head><body>
@@ -317,7 +329,7 @@ const Family = (() => {
   'Gabriela':{role:'A filha · 27',color:'#ae92d0',intro:'Respeito pai e mãe. No tabuleiro, conversamos.'},
   'Gabriel':{role:'O namorado · 28',color:'#829eba',intro:'Vim conhecer a família. Já preciso de um manual.'}
  };
- function avatar(name){
+ function avatar(name,mood=''){
   const dad=name==='Iverson',mom=name==='Ana Paula',girl=name==='Gabriela',boy=name==='Gabriel',female=mom||girl,known=dad||female||boy;
   const bg=profiles[name]?.color||'#c4a96a',skin=boy?'#efc4a7':dad?'#f1c8b0':'#f9d7bc',iris=boy?'#583a2a':'#6c9873';
   const hair=female?'#d9b666':dad?'#b5b9b6':'#141416';
@@ -327,7 +339,7 @@ const Family = (() => {
   const eyes='<path d="M40 61Q48 54 56 60M72 60Q82 53 89 61" fill="none" stroke="#6d4e3c" stroke-width="3" stroke-linecap="round"/><ellipse cx="48" cy="68" rx="9" ry="7" fill="#fff9ed"/><ellipse cx="80" cy="68" rx="9" ry="7" fill="#fff9ed"/><ellipse cx="49" cy="68" rx="4.5" ry="5.5" fill="'+iris+'"/><ellipse cx="79" cy="68" rx="4.5" ry="5.5" fill="'+iris+'"/><circle cx="49" cy="69" r="2.4" fill="#202820"/><circle cx="79" cy="69" r="2.4" fill="#202820"/><circle cx="50" cy="66" r="1.5" fill="white"/><circle cx="80" cy="66" r="1.5" fill="white"/>';
   const glasses=mom?'<g fill="none" stroke="#4c414d" stroke-width="3"><rect x="35" y="59" width="25" height="19" rx="7"/><rect x="69" y="59" width="25" height="19" rx="7"/><path d="M60 65Q64 62 69 65M28 63L35 65M94 65L100 62"/></g>':'';
   const beard=boy?'<path d="M34 77L42 88Q46 80 55 88Q63 84 72 88Q83 81 90 78L91 91Q81 110 64 111Q44 109 37 91Z" fill="#171719" opacity=".88"/><path d="M44 95L47 98M49 101L52 104M76 103L79 100M83 94L85 91" stroke="#101013" stroke-width="1.3"/>':'';
-  const mouth=boy?'<path d="M50 91Q63 85 77 91Q72 102 63 101Q54 101 50 91Z" fill="#bd786b"/><path d="M52 92Q63 95 75 92" stroke="#6c463c" stroke-width="1.5" fill="none"/>':'<path d="M49 91Q64 96 80 88Q73 104 63 103Q55 102 49 91Z" fill="#924d46"/><path d="M52 93Q64 96 76 91L73 96Q63 100 54 96Z" fill="#fff9e9"/>';
+  const mouth=mood==='cry'?'<path d="M50 98Q64 82 78 98" fill="none" stroke="#924d46" stroke-width="4" stroke-linecap="round"/><path d="M40 58L55 54M73 54L88 58" fill="none" stroke="#6d4e3c" stroke-width="3" stroke-linecap="round"/><g fill="#79d8ff" stroke="#d5f5ff" stroke-width="1"><path class="finale-tear tear-left" d="M45 73Q36 88 45 89Q54 88 45 73Z"/><path class="finale-tear tear-right" d="M83 73Q74 88 83 89Q92 88 83 73Z"/></g>':mood==='cheer'?'<path d="M48 89Q64 97 81 87Q76 109 64 108Q51 108 48 89Z" fill="#924d46"/><path d="M51 92Q64 98 77 91L74 97Q64 102 54 97Z" fill="#fff9e9"/>':boy?'<path d="M50 91Q63 85 77 91Q72 102 63 101Q54 101 50 91Z" fill="#bd786b"/><path d="M52 92Q63 95 75 92" stroke="#6c463c" stroke-width="1.5" fill="none"/>':'<path d="M49 91Q64 96 80 88Q73 104 63 103Q55 102 49 91Z" fill="#924d46"/><path d="M52 93Q64 96 76 91L73 96Q63 100 54 96Z" fill="#fff9e9"/>';
   const wrinkles=dad?'<path d="M48 46Q64 43 79 46M50 51Q64 48 76 51M36 75L41 77M88 77L93 74" fill="none" stroke="#c4967f" stroke-width="1.2"/>':'';
   if(!known)return '<svg viewBox="0 0 128 140" aria-hidden="true"><circle cx="64" cy="65" r="58" fill="#283347"/><path d="M23 133Q23 97 64 96Q105 97 105 133" fill="#d2ac62"/><path d="M38 53Q35 20 64 20Q95 23 91 56L85 82Q64 106 43 82Z" fill="#f3cfac"/><path d="M35 57Q23 30 46 19Q77 6 95 30L94 60L84 43Q56 51 46 37Z" fill="#453b3b"/><path d="M46 63L55 64M74 64L84 63M53 82Q65 90 77 80" fill="none" stroke="#5c4135" stroke-width="4" stroke-linecap="round"/><path d="M41 127L64 104L87 127" fill="#f6dfab"/></svg>';
   return '<svg viewBox="0 0 128 140" aria-hidden="true"><circle cx="64" cy="65" r="58" fill="'+bg+'"/><circle cx="64" cy="65" r="53" fill="none" stroke="#ffffff25"/>'+back+'<path d="M55 103L54 120Q64 128 75 120L73 102" fill="'+skin+'" stroke="#ad816a" stroke-width="1.4"/><path d="M21 140Q26 116 53 116Q64 128 76 116Q103 117 110 140" fill="'+(dad?'#284e49':mom?'#654768':girl?'#674174':'#31495d')+'"/><ellipse cx="34" cy="72" rx="8" ry="13" fill="'+skin+'"/><ellipse cx="95" cy="72" rx="7" ry="13" fill="'+skin+'"/><path d="'+head+'" fill="'+skin+'" stroke="#b2836e" stroke-width="1.8"/>'+top+wrinkles+eyes+'<path d="M63 70L59 83Q63 87 68 83" fill="none" stroke="#c18f73" stroke-width="2" stroke-linecap="round"/><ellipse cx="44" cy="82" rx="6" ry="3" fill="#eeb09b" opacity=".65"/><ellipse cx="85" cy="82" rx="5" ry="3" fill="#eeb09b" opacity=".65"/>'+beard+mouth+glasses+(female?'<circle cx="33" cy="86" r="3" fill="#f0d68b"/><circle cx="95" cy="86" r="3" fill="#f0d68b"/>':'')+'</svg>';
@@ -768,7 +780,7 @@ installHandDrag();
    $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   },result:()=>{
    if(GAME==='phase10'){phaseResult(info);return;}
-   showModal('<div class="result"><span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
+   showModal('<div class="result">'+finaleMarkup()+'<span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
    if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
    $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   }};
@@ -1015,11 +1027,18 @@ function pauseMenu(){
  $('resume').onclick=closeModal;$('go-home').onclick=goHome;$('restart').onclick=()=>{showModal('<h2>Recomeçar a partida?</h2><p>O progresso atual será substituído por uma nova distribuição de cartas.</p><div class="actions"><button class="primary" id="restart-yes">Sim, recomeçar</button><button class="secondary" id="restart-no">Voltar</button></div>');$('restart-no').onclick=pauseMenu;$('restart-yes').onclick=()=>{const config=state.config;closeModal();start(config);};};
 }
 $('pause').onclick=pauseMenu;
+function finaleMarkup(){
+ if(!state||typeof state.winner!=='number')return '';
+ const winners=state.players.filter(p=>p.team===state.winner),losers=state.players.filter(p=>p.team!==state.winner);
+ const cast=(people,mood)=>people.map((p,i)=>'<figure class="finale-person '+mood+'" style="--person-delay:'+i*.18+'s"><div class="finale-head">'+Family.avatar(p.name,mood)+'</div><figcaption>'+escapeHTML(p.name)+'</figcaption></figure>').join('');
+ const fireworks=Array.from({length:5},(_,i)=>'<span class="finale-firework" style="--burst-x:'+([12,77,43,89,25][i])+'%;--burst-y:'+([29,20,38,54,61][i])+'%;--burst-delay:'+i*.38+'s;--burst-color:'+(['#ffe08c','#91d8ff','#ff9fce','#a2f1bd','#c6b0ff'][i])+'">'+Array.from({length:12},(_,j)=>'<i style="--ray:'+j*30+'deg"></i>').join('')+'</span>').join('');
+ return '<section class="finale-stage" aria-label="Comemoração da dupla vencedora e reação da dupla perdedora"><div class="finale-fireworks" aria-hidden="true">'+fireworks+'</div><div class="finale-team finale-winners"><strong>🏆 A dupla campeã!</strong><div class="finale-cast">'+cast(winners,'cheer')+'</div><small>Hoje o café tem gosto de vitória!</small></div><div class="finale-team finale-losers"><strong>😭 A revanche vem aí…</strong><div class="finale-cast">'+cast(losers,'cry')+'</div><small>Foi só um cisco no olho, viu?</small></div></section>';
+}
 function showResult(){
  if(multiplayer?.enabled){multiplayer.result();return;}
  if(!state||state.winner===null)return;
  const won=state.winner===0,draw=state.winner==='draw';
- showModal('<div class="result"><div class="result-icon">'+(draw?'♧':won?'✦':'♠')+'</div><span class="eyebrow">FIM DE PARTIDA</span><h2>'+(draw?'Deu empate!':won?(state.config.count===4?'Sua dupla venceu!':'Você venceu!'):'Os adversários venceram')+'</h2><p>'+(draw?'Não há jogadas possíveis para os participantes.':'Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+' sequências.')+'<br>'+state.move+' jogadas na mesa.</p><div class="actions"><button class="primary" id="rematch">Jogar novamente</button><button class="secondary" id="result-home">Tela inicial</button></div></div>');
+ showModal('<div class="result">'+finaleMarkup()+'<div class="result-icon">'+(draw?'♧':won?'✦':'♠')+'</div><span class="eyebrow">FIM DE PARTIDA</span><h2>'+(draw?'Deu empate!':won?(state.config.count===4?'Sua dupla venceu!':'Você venceu!'):'Os adversários venceram')+'</h2><p>'+(draw?'Não há jogadas possíveis para os participantes.':'Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+' sequências.')+'<br>'+state.move+' jogadas na mesa.</p><div class="actions"><button class="primary" id="rematch">Jogar novamente</button><button class="secondary" id="result-home">Tela inicial</button></div></div>');
  $('rematch').onclick=()=>{const config=state.config;closeModal();start(config);};$('result-home').onclick=goHome;
 }
 $('rules').onclick=()=>showModal(`<span class="eyebrow">GUIA DA MESA</span><h2>Como jogar</h2>
@@ -1163,7 +1182,7 @@ if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>
    $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   },result:()=>{
    if(GAME==='phase10'){phaseResult(info);return;}
-   showModal('<div class="result"><span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
+   showModal('<div class="result">'+finaleMarkup()+'<span class="eyebrow">SALA '+info.room.number+'</span><h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(info.host?'<button class="primary" id="online-rematch">Voltar à sala e jogar outra</button>':'<p>Aguardando quem abriu a sala iniciar outra rodada.</p>')+'<button class="secondary" id="online-leave">Sair da sala</button></div></div>');
    if($('online-rematch'))$('online-rematch').onclick=()=>action('rematch');
    $('online-leave').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
   }};

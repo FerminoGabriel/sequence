@@ -1,7 +1,7 @@
 /* Recursos públicos versionados. O cache não intercepta autenticação ou partidas. */
-const CACHE = 'noite-public-23e0b488f8bc';
+const CACHE = 'noite-public-5a92a7dac411';
 const ROOT = new URL('./',self.location.href).href;
-const SHELL = ['index.html','music-worker.js','manifest.webmanifest','vendor/supabase.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable.png','icons/apple-touch-icon.png'];
+const SHELL = ['index.html','manifest.webmanifest','vendor/supabase.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable.png','icons/apple-touch-icon.png'];
 const ASSETS = new Set(SHELL.map(path=>new URL(path,ROOT).href));
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll([...ASSETS])));

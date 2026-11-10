@@ -97,7 +97,6 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 <div class="setup-pair"><label class="field">Quem é você na mesa?<select id="character"><option>Iverson</option><option>Ana Paula</option><option>Gabriela</option><option selected>Gabriel</option></select></label><label class="field">Seu parceiro ou parceira<select id="companion"><option>Iverson</option><option>Ana Paula</option><option selected>Gabriela</option><option>Gabriel</option></select></label></div>
 <p id="lineup" class="lineup">A família já está escolhendo as desculpas.</p>
 <fieldset><legend>Quanto desafio?</legend><div class="segmented difficulty"><label><input type="radio" name="difficulty" value="easy"><span>Fácil</span></label><label><input type="radio" name="difficulty" value="medium" checked><span>Médio</span></label><label><input type="radio" name="difficulty" value="hard"><span>Difícil</span></label></div><p id="difficulty-info" class="muted field-help">Uma disputa boa, com tempo para provocar.</p></fieldset>
-<div class="setup-bottom"><label class="checkline"><input type="checkbox" id="start-music" checked> Música ambiente</label><span class="muted">♫</span></div>
 <button class="primary start" type="submit">Sentar à mesa <span>→</span></button><button type="button" id="continue" class="secondary hidden">Continuar nossa partida</button>
 </form>
 </section>
@@ -530,59 +529,15 @@ const PhaseScenes=[
 [['Gabriela','Uma fase de cada vez. E uma provocação por compra.']]
 ];
 
-/* As mesmas composições são sintetizadas fora do fluxo da interface. */
-const Hymns=(()=>{
- const tracks={varanda:{title:'Luzes da varanda',bpm:108,key:60,melody:[0,4,7,9,7,4,2,4,5,9,7,4,2,0,2,7],chords:[0,9,5,7]},cafe:{title:'Café depois das oito',bpm:116,key:62,melody:[7,4,2,0,2,4,7,11,9,7,4,5,4,2,0,7],chords:[0,5,9,7]},cartas:{title:'Cartas na mesa',bpm:112,key:65,melody:[0,2,4,7,4,2,9,7,5,4,2,5,4,7,11,7],chords:[0,7,9,5]},estrelas:{title:'Entre estrelas e risadas',bpm:104,key:67,melody:[4,7,12,11,9,7,4,2,0,4,9,7,5,4,2,0],chords:[0,9,5,0]},revanche:{title:'Só mais uma revanche',bpm:122,key:60,melody:[7,7,9,7,4,2,0,4,5,5,9,7,11,9,7,0],chords:[0,5,7,0]}};
- const cache=new Map();
- const pending=new Map();
- let worker=null;
- function connect(){
-  if(worker)return;
-  worker=new Worker(new URL('./music-worker.js',location.href));
-  worker.onmessage=event=>{
-   const {key,buffer,error}=event.data;
-   const job=pending.get(key);
-   if(!job)return;
-   pending.delete(key);
-   if(error){job.reject(Error(error));return;}
-   const url=URL.createObjectURL(new Blob([buffer],{type:'audio/wav'}));
-   cache.set(key,url);
-   job.resolve(url);
-   // Duas faixas são suficientes para a passagem entre músicas.
-   while(cache.size>2){const oldest=cache.keys().next().value;URL.revokeObjectURL(cache.get(oldest));cache.delete(oldest);}
-  };
-  worker.onerror=()=>{
-   worker.terminate();worker=null;
-   for(const job of pending.values())job.reject(Error('Não foi possível preparar a música.'));
-   pending.clear();
-  };
- }
- function url(key){
-  if(!tracks[key])key='varanda';
-  if(cache.has(key)){
-   const value=cache.get(key);cache.delete(key);cache.set(key,value);
-   return Promise.resolve(value);
-  }
-  if(pending.has(key))return pending.get(key).promise;
-  try{connect();}catch(error){return Promise.reject(error);}
-  const job={};
-  job.promise=new Promise((resolve,reject)=>{job.resolve=resolve;job.reject=reject;});
-  pending.set(key,job);worker.postMessage({key});
-  return job.promise;
- }
- return {url,tracks};
-})();
-
 const Speech=(()=>{
  const layer=document.createElement('div');layer.id='speech-layer';layer.setAttribute('aria-live','polite');document.body.append(layer);const active=new Map();
  function place(){for(const [name,item] of active){const anchor=[...document.querySelectorAll('[data-speaker],[data-intro]')].find(el=>(el.dataset.speaker||el.dataset.intro)===name&&el.getBoundingClientRect().width&&el.getBoundingClientRect().height);if(!anchor){item.el.style.visibility='hidden';continue;}item.el.style.visibility='visible';const r=anchor.getBoundingClientRect(),b=item.el.getBoundingClientRect(),vw=window.innerWidth,vh=window.visualViewport?.height||window.innerHeight,left=Math.max(7,Math.min(vw-b.width-7,r.left+r.width/2-b.width/2)),top=Math.max(45,Math.min(vh-b.height-48,r.top-b.height-9));item.el.style.left=left+'px';item.el.style.top=top+'px';item.el.style.setProperty('--tail',Math.max(12,Math.min(b.width-12,r.left+r.width/2-left))+'px');}}
  function say(name,text,human=false){const old=active.get(name);if(old?.human&&!human)return;if(old){clearTimeout(old.timer);old.el.remove();}const el=document.createElement('div');el.className='avatar-speech'+(human?' human-message':'');const b=document.createElement('b'),p=document.createElement('span');b.textContent=name+(human?' · chat':' · resenha');p.textContent=text;el.append(b,p);layer.append(el);const item={el,human,timer:setTimeout(()=>{el.remove();if(active.get(name)===item)active.delete(name);},Math.min(22000,Math.max(12000,text.length*80)))};active.set(name,item);place();}
  window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);return {say,place,clearBots(){for(const [name,x] of active)if(!x.human){clearTimeout(x.timer);x.el.remove();active.delete(name);}}};
 })();
-function createNightAudio(prefs,onError=()=>{}){
+function createNightAudio(prefs){
  const audio={
-  ctx:null,bus:null,player:null,track:null,bag:[],blocked:false,
-  loadedTrack:null,preparing:null,wantsMusic:false,voiceActive:false,
+  ctx:null,bus:null,voiceActive:false,
   init(){
    try{
     if(navigator.audioSession)navigator.audioSession.type=this.voiceActive?'play-and-record':'playback';
@@ -591,9 +546,7 @@ function createNightAudio(prefs,onError=()=>{}){
      this.bus=this.ctx.createGain();this.bus.connect(this.ctx.destination);
     }
     if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});
-    const volume=prefs.volume/100*(this.voiceActive?.25:1);
-    this.bus.gain.setTargetAtTime(volume*.20,this.ctx.currentTime,.05);
-    if(this.player)this.player.volume=volume;
+    this.bus.gain.setTargetAtTime(prefs.volume/100*.20*(this.voiceActive?.25:1),this.ctx.currentTime,.05);
    }catch{}
   },
   tone(freq,length=.3,offset=0,volume=.3,type='sine'){
@@ -603,59 +556,16 @@ function createNightAudio(prefs,onError=()=>{}){
    g.gain.linearRampToValueAtTime(volume,t+.018);g.gain.exponentialRampToValueAtTime(.0001,t+length);
    o.connect(g);g.connect(this.bus);o.start(t);o.stop(t+length+.02);
   },
-  next(){
-   if(!this.bag.length){
-    this.bag=Object.keys(Hymns.tracks);
-    for(let i=this.bag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]];}
-    if(this.bag.at(-1)===this.track)this.bag.reverse();
-   }
-   this.track=this.bag.pop();this.loadedTrack=null;this.player?.pause();this.play();
-  },
-  async play(){
-   if(!prefs.music||document.hidden){this.stop();return;}
-   this.wantsMusic=true;
-   if(!this.player){
-    this.player=new Audio();this.player.preload='auto';this.player.setAttribute('playsinline','');
-    this.player.onended=()=>this.next();
-   }
-   if(!this.track){this.next();return;}
-   const key=this.track;
-   if(this.preparing?.key===key)return this.preparing.promise;
-   const prepare=async()=>{
-    try{
-     if(this.loadedTrack!==key){
-      const url=await Hymns.url(key);
-      if(this.track!==key||!this.wantsMusic||!prefs.music||document.hidden)return;
-      this.player.src=url;this.loadedTrack=key;
-     }
-     if(!this.wantsMusic||this.track!==key)return;
-     if(navigator.audioSession)navigator.audioSession.type=this.voiceActive?'play-and-record':'playback';
-     this.player.volume=prefs.volume/100*(this.voiceActive?.25:1);
-     await this.player.play();this.blocked=false;
-    }catch(error){
-     if(this.track!==key||!this.wantsMusic)return;
-     this.blocked=true;
-     onError(error.name==='NotAllowedError'?'Toque em Som → Ativar áudio para ouvir.':'Não foi possível preparar a música. Toque em Som para tentar novamente.');
-    }finally{
-     if(this.preparing?.key===key)this.preparing=null;
-    }
-   };
-   this.preparing={key,promise:Promise.resolve().then(prepare)};
-   return this.preparing.promise;
-  },
   setVoiceActive(active){
    this.voiceActive=active;
-   const volume=prefs.volume/100*(active?.25:1);
-   if(this.player)this.player.volume=volume;
-   if(this.bus&&this.ctx)this.bus.gain.setTargetAtTime(volume*.20,this.ctx.currentTime,.05);
+   if(this.bus&&this.ctx)this.bus.gain.setTargetAtTime(prefs.volume/100*.20*(active?.25:1),this.ctx.currentTime,.05);
    try{if(navigator.audioSession)navigator.audioSession.type=active?'play-and-record':'playback';}catch{}
   },
-  stop(){this.wantsMusic=false;this.player?.pause();},
+  stop(){if(this.ctx?.state==='running')this.ctx.suspend().catch(()=>{});},
   fx(kind){
    if(!prefs.effects)return;this.init();
    (kind==='win'?[523,659,784,1047]:kind==='sequence'?[392,523,659]:[440,587]).forEach((f,i)=>this.tone(f,.25,i*.085,.35));
-  },
-  get title(){return Hymns.tracks[this.track]?.title||'Playlist aleatória';}
+  }
  };
  return audio;
 }
@@ -904,9 +814,7 @@ const NightMetrics = (() => {
 const GAME=new URLSearchParams(location.search).get('game');
 function nightHub(){
  document.body.classList.add('hub-body');document.querySelector('main').innerHTML='<section class="night-hub"><div class="hub-intro"><span class="eyebrow">A MELHOR PARTE DO DIA COMEÇA AQUI</span><h1>Noite de <em>Jogos.</em></h1><p>Puxe uma cadeira. A família já está com as cartas na mão.</p></div><div class="game-choices"><a class="game-choice sequence-choice" href="?game=sequence"><div class="choice-art sequence-art"><div class="mini-board">'+Array.from({length:25},(_,i)=>'<i class="'+([0,6,12,18,24].includes(i)?'gold-chip':i%7===0?'blue-chip':'')+'">'+['♠','♥','♦','♣'][i%4]+'</i>').join('')+'</div></div><div class="choice-copy"><span class="eyebrow">ESTRATÉGIA EM DUPLA</span><h2>Sequence</h2><p>Conecte cinco. Bloqueie o rival.<br>Defenda a honra da sua dupla.</p><span class="choice-enter">Sentar à mesa <b>↗</b></span></div></a><a class="game-choice phase-choice" href="?game=phase10"><div class="choice-art phase-art"><span class="show-card sc-red">7</span><span class="show-card sc-blue">8</span><span class="show-card sc-gold">9</span><span class="show-card sc-green">10</span></div><div class="choice-copy"><span class="eyebrow">DEZ FASES. MIL DESCULPAS.</span><h2>Phase 10</h2><p>Monte sua fase. Esvazie a mão.<br>Hoje é cada um por si.</p><span class="choice-enter">Entrar na rodada <b>↗</b></span></div></a></div><div class="hub-family">'+Family.names.map(n=>'<div data-intro="'+n+'">'+Family.avatar(n)+'<span>'+n+'</span></div>').join('')+'<p>Quatro personagens.<br><strong>Resenha sem limite.</strong></p></div><p class="hub-foot">1–4 pessoas · bots nas vagas · chat na mesa</p></section>';
- document.querySelector('.brand').innerHTML='<b>✦</b><span>NOITE DE JOGOS<small>A FAMÍLIA TEM LUGAR MARCADO</small></span>';document.querySelector('.topbar nav').innerHTML='<button class="quiet" id="hub-music">♫ Música</button>';
- let prefs={music:false,volume:30,effects:true};const audio=createNightAudio(prefs);document.getElementById('hub-music').onclick=()=>{prefs.music=!prefs.music;audio.init();audio.play();document.getElementById('hub-music').textContent=prefs.music?'♫ Som ligado':'♫ Música';};
- document.querySelectorAll('.game-choice').forEach(a=>a.addEventListener('click',()=>audio.stop()));
+ document.querySelector('.brand').innerHTML='<b>✦</b><span>NOITE DE JOGOS<small>A FAMÍLIA TEM LUGAR MARCADO</small></span>';document.querySelector('.topbar nav').replaceChildren();
  const adjust=()=>document.documentElement.style.setProperty('--app-height',(window.visualViewport?.height||innerHeight)+'px');adjust();window.visualViewport?.addEventListener('resize',adjust);
  setTimeout(()=>Speech.say('Iverson','Está valendo a honra. Escolhe a mesa!'),1500);
 }
@@ -917,13 +825,13 @@ if(!["sequence","phase10"].includes(GAME)){nightHub();}else{nightPrepare();if(GA
 const E=PhaseEngine,$=id=>document.getElementById(id),SETTINGS='sequence-audio-v1',SAVE='phase10-family-v1';
 let multiplayer=null,state=null,selected=-1,timer=null,paused=false,toastTimer,chatTimer,chatGeneration=0,lobbyIndex=0;
 const phaseHandOrder=new PhaseHandOrder();let handDrag=null,ignoreHandClickUntil=0;
-const phaseSelected=new Set();let prefs={music:true,effects:true,volume:35,banter:true};try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
+const phaseSelected=new Set();let prefs={effects:true,volume:35,banter:true};try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 function toggle(id,yes){$(id).classList.toggle('hidden',!yes);}
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3300);}
-const audio=createNightAudio(prefs,toast),portrait=n=>'<span class="portrait">'+Family.avatar(n)+'</span>';
-function unlockAudio(){audio.init();if(prefs.music&&(!audio.player||audio.player.paused))audio.play();}
+const audio=createNightAudio(prefs),portrait=n=>'<span class="portrait">'+Family.avatar(n)+'</span>';
+function unlockAudio(){audio.init();}
 document.addEventListener('pointerup',unlockAudio,{passive:true});document.addEventListener('touchend',unlockAudio,{passive:true});
 function save(){if(!multiplayer?.enabled&&state)storageSet(SAVE,state);}
 function saved(){try{const s=JSON.parse(localStorage.getItem(SAVE)||'null');return s?.kind==='phase10'&&s.winner===null?s:null;}catch{return null;}}
@@ -953,7 +861,7 @@ function render(){if(!state)return;const renderStarted=performance.now();const m
 function schedule(){clearTimeout(timer);if(multiplayer?.enabled||!state||paused||document.hidden||state.winner!==null)return;if(state.phase==='round'||state.turn!==0)timer=setTimeout(()=>{try{E.bot(state);phaseSelected.clear();render();if(state.winner!==null)showResult();else schedule();}catch(e){toast(e.message);}},state.phase==='round'?12000:5200);}
 function act(type,p={}){if(multiplayer?.enabled)return multiplayer.action(type,p);try{if(state.turn!==0||paused)throw Error('Aguarde sua vez.');if(type==='pdraw')E.draw(state,p.source);if(type==='playphase')E.lay(state,p.ids);if(type==='hit')E.hit(state,p.ci,p.target,p.group,p.side);if(type==='rearrange')E.rearrange(state,p.ids,p.target,p.group,p.lo);if(type==='discard')E.discard(state,p.ci,p.target);phaseSelected.clear();selected=-1;audio.fx(type==='playphase'?'sequence':'place');render();if(state.winner!==null)showResult();schedule();}catch(e){toast(e.message);}}
 function showGame(){stopChat();toggle('home',false);toggle('game',true);toggle('pause',true);paused=false;selected=-1;phaseSelected.clear();render();schedule();nextChat();}
-function start(){phaseHandOrder.reset();state=E.create({name:$('character').value,difficulty:new FormData($('setup')).get('difficulty')});showGame();audio.init();audio.play();}
+function start(){phaseHandOrder.reset();state=E.create({name:$('character').value,difficulty:new FormData($('setup')).get('difficulty')});showGame();audio.init();}
 function phaseResult(info){const title=state.winner===0?'Você venceu as dez fases!':state.players[state.winner].name+' venceu!';showModal('<h2>'+title+'</h2><p>'+state.players.map((p,i)=>p.name+': '+state.scores[i]+' pontos').join('<br>')+'</p><div class="actions">'+(!info||info.host?'<button class="primary" id="phase-rematch">Jogar outra</button>':'<p>Aguarde quem abriu a sala iniciar outra.</p>')+'<button class="secondary" id="phase-exit">Noite de Jogos</button></div>');if($('phase-rematch'))$('phase-rematch').onclick=()=>{closeModal();if(info)multiplayer.action('rematch');else start();};$('phase-exit').onclick=async()=>{if(!info||await multiplayer.action('leave'))location.assign(location.pathname);};}
 function showResult(){if(multiplayer?.enabled)multiplayer.result();else phaseResult(null);}
 $('arena').querySelector('.board-frame').remove();$('arena').querySelector('.table-wordmark').remove();$('arena').insertAdjacentHTML('beforeend','<div id="phase-table"><div id="phase-piles"></div><div id="phase-melds"></div></div>');$('game').classList.add('phase-game');$('conversation').insertAdjacentHTML('afterend','<p id="phase-goal"></p>');document.querySelector('.turn-actions').innerHTML='<button class="secondary" id="find-phase">Encontrar fase</button><button class="primary" id="lay-phase">Baixar fase</button><button class="secondary" id="phase-discard">Descartar</button>';
@@ -974,18 +882,24 @@ $('phase-melds').onclick=e=>{
   const chosen=choices[Number(btn.dataset.runChoice)];closeModal();act('rearrange',{ids,target,group,lo:chosen.lo});
  });
 };
-$('setup').onsubmit=e=>{e.preventDefault();prefs.music=$('start-music').checked;audio.init();audio.play();if(multiplayer?.enabled)multiplayer.start();else start();};
+$('setup').onsubmit=e=>{e.preventDefault();audio.init();if(multiplayer?.enabled)multiplayer.start();else start();};
 $('continue').onclick=()=>{state=saved();if(state)showGame();};toggle('continue',!!saved());
 $('companion').closest('label').classList.add('hidden');$('character').onchange=updateLineup;$('family-lobby').onclick=e=>{const p=e.target.closest('[data-intro]');if(p){$('character').value=p.dataset.intro;updateLineup();}};
 $('history-button').onclick=()=>showModal('<h2>Últimas jogadas</h2><ol>'+state.log.map(l=>'<li>'+escapeHTML(l)+'</li>').join('')+'</ol>');
 $('pause').onclick=()=>{if(multiplayer?.enabled){multiplayer.menu();return;}paused=true;clearTimeout(timer);showModal('<h2>Pausa para o café</h2><button class="primary" id="phase-resume">Voltar</button>');$('phase-resume').onclick=()=>{closeModal();paused=false;schedule();render();};};$('modal').addEventListener('close',()=>{if(paused){paused=false;schedule();render();}});
 $('brand').onclick=e=>{e.preventDefault();save();location.assign(location.pathname);};
 $('banter-toggle').onclick=()=>{prefs.banter=!prefs.banter;storageSet(SETTINGS,prefs);$('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));stopChat();if(prefs.banter)nextChat();};
-$('start-music').checked=prefs.music;$('start-music').onchange=e=>{prefs.music=e.target.checked;storageSet(SETTINGS,prefs);audio.play();};
 $('rules').onclick=()=>showModal('<span class="eyebrow">PHASE 10</span><h2>Dez fases, cada um por si</h2><p>Compre uma carta do monte ou do descarte. Baixe exatamente as cartas exigidas pela sua fase e descarte uma para encerrar a vez. Na vez em que baixou, não pode encaixar cartas nem mover curingas. Espere sua próxima vez, compre uma carta e então poderá encaixar nos seus jogos ou nos jogos dos adversários.</p><ol>'+E.descriptions.map(d=>'<li>'+d+'</li>').join('')+'</ol><p>Grupos iguais usam o mesmo número, em qualquer cor. Sequências são consecutivas de 1 a 12, sem voltar ao 1. Cor exige apenas a mesma cor. Curingas substituem números e cores: a fase precisa de pelo menos uma carta numérica. Regra da família: o curinga pode mudar de posição dentro da mesma sequência. Você pode colocar a carta numérica no lugar dele e reposicioná-lo nessa sequência, desde que o resultado seja consecutivo de 1 a 12. Ele não volta para a mão nem passa para outro grupo. Exemplo: 3–4–5–curinga pode virar 1–curinga–3–4–5 ao encaixar o 1. Pular encerra a vez e bloqueia a próxima vez de um adversário; não pode ser comprado do descarte nem acumulado contra alguém já bloqueado.</p><p>Quem esvazia a mão encerra a rodada. Todos que baixaram avançam uma fase; os demais repetem. Cartas restantes valem: 1–9 = 5, 10–12 = 10, Pular = 15, Curinga = 25 pontos. Vence quem completa a fase 10 ao fim da rodada; entre vários, vence a menor soma. Empatados repetem a fase 10 e o primeiro a bater vence.</p><p>Toque em Encontrar fase para selecionar uma combinação válida, depois em Baixar fase. Arraste as cartas da mão para organizar, inclusive enquanto espera sua vez. Para encaixar, selecione cartas e toque na sequência desejada, ou uma carta para outros grupos. Para apenas mover um curinga, desmarque as cartas da mão e toque na sequência: escolha a organização na prévia. Para descartar, selecione uma carta e toque em Descartar. As rodadas seguintes começam automaticamente.</p><p>Quatro lugares, com bots nas vagas. Somente quem abriu a sala inicia. A mesa continua durante o chat. Os bots jogam em cerca de cinco segundos.</p><p><a href="https://service.mattel.com/instruction_sheets/HHR41-Eng.pdf" target="_blank" rel="noopener">Regras da Mattel</a>. Adaptação independente com arte própria e regras da família para os curingas e os encaixes.</p>');
-document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();stopChat();clearTimeout(timer);save();}else{audio.play();nextChat();schedule();queueFit();}});window.addEventListener('beforeunload',save);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();stopChat();clearTimeout(timer);save();}else{nextChat();schedule();queueFit();}});window.addEventListener('beforeunload',save);
 updateLineup();nextChat();fitTable();
-$('sound').onclick=()=>{audio.init();showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Música e sons</h2><p>Cinco instrumentais originais, mais animados, em ordem aleatória. Uma música começa assim que a outra termina.</p><p id="now-playing">♫ '+audio.title+'</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música</label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos</label><label class="field">Volume<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="secondary" id="next-song">Próxima música</button><button class="primary" id="sound-done">Pronto</button></div>');$('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};$('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};$('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};$('audio-unlock').onclick=()=>{prefs.music=true;$('music-check').checked=true;audio.init();audio.play();};$('next-song').onclick=()=>{audio.next();$('now-playing').textContent='♫ '+audio.title;};$('sound-done').onclick=closeModal;};
+$('sound').onclick=()=>{
+ audio.init();
+ showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Sons do jogo</h2><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos sonoros</label><label class="field">Volume dos efeitos<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar efeitos</button><button class="primary" id="sound-done">Pronto</button></div>');
+ $('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};
+ $('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};
+ $('audio-unlock').onclick=()=>{prefs.effects=true;$('fx-check').checked=true;storageSet(SETTINGS,prefs);audio.init();audio.fx('place');};
+ $('sound-done').onclick=closeModal;
+};
 
 function handSignature(){return state?state.round+'|'+state.players[0].name+'|'+JSON.stringify(state.hands[0]):'';}
 function cancelHandDrag(){if(handDrag){handDrag.ghost?.remove();handDrag.marker?.remove();if($('hand').hasPointerCapture?.(handDrag.pointer))$('hand').releasePointerCapture(handDrag.pointer);$('hand').querySelectorAll('.hand-drag-source').forEach(b=>b.classList.remove('hand-drag-source'));handDrag=null;}}
@@ -1265,7 +1179,7 @@ const E=Sequence,$=id=>document.getElementById(id);
 let multiplayer=null;
 let state=null,selected=-1,timer=null,paused=false,toastTimer;
 const SAVE='sequence-familia-v2',SETTINGS='sequence-audio-v1';
-let prefs={music:true,effects:true,volume:35,track:'assurance',banter:true};
+let prefs={effects:true,volume:35,banter:true};
 try{prefs={...prefs,...JSON.parse(localStorage.getItem(SETTINGS)||'{}')};}catch{}
 
 function storageSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
@@ -1276,11 +1190,11 @@ function toast(text){$('toast').textContent=text;$('toast').classList.add('show'
 function save(){if(multiplayer?.enabled)return;if(state?.winner===null)storageSet(SAVE,state);}
 function log(text){state.log.unshift(text);state.log=state.log.slice(0,35);}
 function toggle(id,visible){$(id).classList.toggle('hidden',!visible);}
-const audio=createNightAudio(prefs,toast);
+const audio=createNightAudio(prefs);
 // Reativa áudio interrompido por bloqueio da tela, chamada ou política de reprodução.
 function unlockAudio(){
  audio.init();
- if(prefs.music&&!document.hidden&&(!audio.player||audio.player.paused))audio.play();
+
 }
 document.addEventListener('pointerup',unlockAudio,{passive:true});
 document.addEventListener('touchend',unlockAudio,{passive:true});
@@ -1388,8 +1302,7 @@ function renderPeople(){
  const absent=Family.names.filter(n=>!state.players.some(p=>p.name===n));
  $('spectators').innerHTML=absent.map(n=>'<div class="spectator '+(currentSpeaker===n?'speaking':'')+'" data-speaker="'+n+'" title="'+n+' · na torcida">'+portrait(n)+'<span>Torcida</span></div>').join('');
 }
-$('start-music').checked=prefs.music;toggle('continue',!!saved());
-$('start-music').onchange=e=>{prefs.music=e.target.checked;storageSet(SETTINGS,prefs);audio.play();};
+toggle('continue',!!saved());
 $('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));
 $('banter-toggle').onclick=()=>{prefs.banter=!prefs.banter;storageSet(SETTINGS,prefs);$('banter-toggle').setAttribute('aria-pressed',String(prefs.banter));stopChat();if(prefs.banter)nextChat(1500);toast(prefs.banter?'A resenha voltou!':'Conversas silenciadas.');};
 $('family-lobby').onclick=e=>{const person=e.target.closest('[data-intro]');if(person){lobbyIndex=Family.names.indexOf(person.dataset.intro);$('character').value=person.dataset.intro;updateLineup();}};
@@ -1486,16 +1399,16 @@ function botTurn(){
  else{const name=state.players[state.turn].name;E.pass(state);log(name+' passou: nenhuma jogada disponível.');render();if(state.winner!==null)showResult();else schedule();}
 }
 function showGame(){stopChat();toggle('home',false);toggle('game',true);toggle('pause',true);paused=false;selected=-1;render();schedule();fitTable();nextChat(2200);}
-function start(config){clearTimeout(timer);state=E.create(config);log(state.players[state.dealer].name+' distribuiu as cartas. '+state.players[state.turn].name+' começa.');showGame();audio.init();audio.play();}
+function start(config){clearTimeout(timer);state=E.create(config);log(state.players[state.dealer].name+' distribuiu as cartas. '+state.players[state.turn].name+' começa.');showGame();audio.init();}
 $('setup').addEventListener('submit',e=>{
  e.preventDefault();
- if(multiplayer?.enabled){prefs.music=$('start-music').checked;audio.init();audio.play();multiplayer.start();return;}
- const begin=()=>{prefs.music=$('start-music').checked;storageSet(SETTINGS,prefs);start({count:4,difficulty:new FormData($('setup')).get('difficulty'),name:$('character').value,partner:$('companion').value});};
- if(saved()){showModal('<span class="eyebrow">NOVA PARTIDA</span><h2>Começar do zero?</h2><p>A partida salva será substituída.</p><div class="actions"><button class="primary" id="confirm-start">Começar nova partida</button><button class="secondary" id="keep-game">Continuar a salva</button></div>');$('confirm-start').onclick=()=>{closeModal();begin();};$('keep-game').onclick=()=>{closeModal();state=saved();showGame();audio.play();};}else begin();
+ if(multiplayer?.enabled){audio.init();multiplayer.start();return;}
+ const begin=()=>{storageSet(SETTINGS,prefs);start({count:4,difficulty:new FormData($('setup')).get('difficulty'),name:$('character').value,partner:$('companion').value});};
+ if(saved()){showModal('<span class="eyebrow">NOVA PARTIDA</span><h2>Começar do zero?</h2><p>A partida salva será substituída.</p><div class="actions"><button class="primary" id="confirm-start">Começar nova partida</button><button class="secondary" id="keep-game">Continuar a salva</button></div>');$('confirm-start').onclick=()=>{closeModal();begin();};$('keep-game').onclick=()=>{closeModal();state=saved();showGame();};}else begin();
 });
 
 document.querySelectorAll('input[name=difficulty]').forEach(el=>el.onchange=()=>{$('difficulty-info').textContent={easy:'Joga de forma descontraída e deixa oportunidades para você.',medium:'Forma sequências e procura bloquear suas jogadas.',hard:'Prioriza vitórias, bloqueios e ameaças em mais de uma direção.'}[el.value];});
-$('continue').onclick=()=>{state=saved();if(state){showGame();audio.play();}else{toggle('continue',false);toast('Não foi possível recuperar a partida.');}};
+$('continue').onclick=()=>{state=saved();if(state){showGame();}else{toggle('continue',false);toast('Não foi possível recuperar a partida.');}};
 $('hand').onclick=e=>{const b=e.target.closest('[data-card]');if(!b||state.turn!==0||state.phase!=='play'||paused)return;const index=Number(b.dataset.card);selected=selected===index?-1:index;render();$('hand').querySelector('[data-card="'+index+'"]')?.focus({preventScroll:true});};
 $('board').onclick=e=>{const b=e.target.closest('[data-cell]');if(!b||!state||paused||state.turn!==0||state.phase!=='play')return;if(selected<0){toast('Escolha primeiro uma carta da sua mão.');return;}if(multiplayer?.enabled){multiplayer.action('play',{ci:selected,i:Number(b.dataset.cell)});return;}const last=E.play(state,selected,Number(b.dataset.cell));if(last)afterMove(last);else toast('Essa casa não está disponível para a carta selecionada.');};
 $('draw').onclick=()=>{if(multiplayer?.enabled){multiplayer.action('draw');return;}if(state?.turn===0&&E.finish(state)){selected=-1;audio.fx('place');render();schedule();}};
@@ -1540,8 +1453,15 @@ $('rules').onclick=()=>showModal(`<span class="eyebrow">GUIA DA MESA</span><h2>C
 <h3>A família e a resenha</h3><p>Escolha entre Iverson, Ana Paula, Gabriela e Gabriel. Os quatro estão sempre na mesa. As falas do seu personagem são automáticas; as jogadas dele são suas. São 101 cenas aleatórias, com respostas entre os personagens. As falas são apenas humor: não revelam cartas nem orientam jogadas. Use “Resenha” para silenciá-las. Os bots levam cerca de cinco segundos para jogar.</p>
 <h3>Adaptações desta versão digital</h3><p>O jogo exige a compra antes de avançar, evitando a penalidade física por esquecer de comprar. Não há dicas de estratégia entre parceiros. Sequências são reconhecidas automaticamente. Sem jogada legal após a troca permitida, o jogador passa. Se todos ficarem sem jogadas e sem trocas possíveis, a partida empata. No modo solo, o jogo salva neste navegador. On-line, a partida fica na sala: volte pelo mesmo navegador para recuperar seu lugar.</p>
 <p><a href="https://www.jaxgames.com/sequence-game-rules/" target="_blank" rel="noopener">Referência: regras da JAX</a>. Arte própria; adaptação independente, sem vínculo com a marca.</p>`);
-$('sound').onclick=()=>{audio.init();showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Música e sons</h2><p>Cinco instrumentais originais, mais animados, em ordem aleatória. Uma música começa assim que a outra termina.</p><p id="now-playing">♫ '+audio.title+'</p><label class="checkline"><input id="music-check" type="checkbox" '+(prefs.music?'checked':'')+'> Música</label><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos</label><label class="field">Volume<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar áudio</button><button class="secondary" id="next-song">Próxima música</button><button class="primary" id="sound-done">Pronto</button></div>');$('music-check').onchange=e=>{prefs.music=e.target.checked;$('start-music').checked=prefs.music;storageSet(SETTINGS,prefs);audio.play();};$('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};$('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};$('audio-unlock').onclick=()=>{prefs.music=true;$('music-check').checked=true;audio.init();audio.play();};$('next-song').onclick=()=>{audio.next();$('now-playing').textContent='♫ '+audio.title;};$('sound-done').onclick=closeModal;};
-document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();clearTimeout(timer);stopChat();save();}else{audio.play();schedule();nextChat();queueFit();}});
+$('sound').onclick=()=>{
+ audio.init();
+ showModal('<span class="eyebrow">NOITE DE JOGOS</span><h2>Sons do jogo</h2><label class="checkline"><input id="fx-check" type="checkbox" '+(prefs.effects?'checked':'')+'> Efeitos sonoros</label><label class="field">Volume dos efeitos<input id="volume" type="range" min="0" max="100" value="'+prefs.volume+'"></label><div class="actions"><button class="secondary" id="audio-unlock">Ativar efeitos</button><button class="primary" id="sound-done">Pronto</button></div>');
+ $('fx-check').onchange=e=>{prefs.effects=e.target.checked;storageSet(SETTINGS,prefs);};
+ $('volume').oninput=e=>{prefs.volume=Number(e.target.value);storageSet(SETTINGS,prefs);audio.init();};
+ $('audio-unlock').onclick=()=>{prefs.effects=true;$('fx-check').checked=true;storageSet(SETTINGS,prefs);audio.init();audio.fx('place');};
+ $('sound-done').onclick=closeModal;
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.stop();clearTimeout(timer);stopChat();save();}else{schedule();nextChat();queueFit();}});
 window.addEventListener('beforeunload',save);
 
 

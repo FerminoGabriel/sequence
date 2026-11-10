@@ -85,6 +85,12 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 .sync-notice{font-size:10px;color:var(--gold);margin-left:auto;white-space:nowrap}.sync-notice:empty{display:none}
 
 #app-notice{position:fixed;left:12px;right:12px;bottom:12px;z-index:80;display:flex;align-items:center;gap:10px;padding:14px;background:#233044;border:1px solid #e8bd7480;border-radius:12px;box-shadow:0 8px 30px #0008;font-size:12px}#app-notice span{flex:1}#app-notice button{background:#e8bd74;color:#25282d;border-radius:7px;padding:7px 10px}.app-offline .brand{opacity:.7}@media(max-width:600px){#install-app{font-size:9px;padding:6px 3px}#app-notice{font-size:11px;flex-wrap:wrap}}
+
+/* Entrada offline e pareamento entre aparelhos próximos. */
+.hub-modes{display:flex;justify-content:center;gap:8px;margin:12px 0 4px;flex-wrap:wrap}.hub-modes button[aria-pressed=true]{background:#e8bd74;color:#10141e}.hub-intro .hub-mode-hint{font-size:12px;margin:4px 0 0;min-height:16px}.offline-ready{font-size:10px;color:#a6d5b6}.game-modes{flex-wrap:wrap;gap:5px;margin-top:8px}.game-modes a{text-decoration:none;font-size:11px;padding:6px 9px}.near-pair{text-align:center}.near-pair p{font-size:13px}.near-pair canvas{display:block;max-width:min(100%,340px);max-height:40dvh;width:auto;height:auto;margin:12px auto;image-rendering:pixelated;background:white;border:8px solid white;border-radius:8px}.near-pair textarea{width:100%;min-height:60px;max-height:100px;resize:vertical;padding:8px;background:#151e2a;color:#eee;border:1px solid #596171;border-radius:7px;font-size:12px;word-break:break-all}.near-pair details{text-align:left;margin-bottom:12px}.near-pair video{max-width:100%;max-height:35dvh;border-radius:10px}.near-pair .actions{justify-content:center}.near-pair .field{text-align:left;margin-top:12px}.near-pair [role=status]{color:#e8bd74}.online-actions [hidden]{display:none!important}
+@media(max-height:750px){.hub-modes{margin-top:6px}.hub-intro .hub-mode-hint{font-size:10px}.night-hub{gap:12px}.hub-intro h1{font-size:clamp(30px,6vh,54px)}}
+@media(max-width:600px){.hub-modes{gap:4px}.hub-modes button{font-size:11px;padding:7px 9px}.game-modes a{font-size:10px;padding:5px}.hub-family{margin-top:0}.near-pair canvas{max-height:33dvh}.setup .online-actions{margin-top:6px}.game-modes{margin-top:4px}}
+
 </style>
 <script defer src="vendor/supabase.js"></script>
 </head><body>
@@ -725,6 +731,106 @@ const NightMetrics = (() => {
  return api;
 })();
 
+/* Mesa local autoritativa. Nunca acessa serviços externos. */
+class NearbyTable {
+ constructor(engine,game,names){this.E=engine;this.game=game;this.names=names;this.members=new Map([['host',{seat:null}]]);this.state=null;this.revision=0;this.chat=[];this.message=0;}
+ add(id){if(this.members.has(id))return;if(this.members.size>=4)throw Error('A mesa já tem quatro pessoas.');this.members.set(id,{seat:null});this.revision++;}
+ remove(id){if(id!=='host'){this.members.delete(id);this.revision++;}}
+ status(){return !this.state?'waiting':this.state.winner===null?'playing':'over';}
+ record(s,text){s.log.unshift(text);s.log=s.log.slice(0,35);}
+ dispatch(id,type,p={},revision){
+  const m=this.members.get(id),E=this.E;if(!m)throw Error('Conecte-se à mesa novamente.');
+  if(type==='pick'){
+   if(!Number.isInteger(p.seat)||p.seat<0||p.seat>3)throw Error('Escolha um personagem.');
+   if(this.state&&m.seat!==null)throw Error('Seu personagem está reservado até o fim da partida.');
+   if([...this.members].some(([key,v])=>key!==id&&v.seat===p.seat))throw Error('Esse personagem já foi escolhido.');m.seat=p.seat;
+  }else if(type==='chat'){
+   if(m.seat===null)throw Error('Escolha seu personagem primeiro.');const body=String(p.text||'').trim().slice(0,300);if(!body)return;
+   this.chat.push({id:++this.message,speaker:this.names[m.seat],body,created_at:new Date().toISOString()});this.chat=this.chat.slice(-40);
+  }else if(type==='start'||type==='rematch'){
+   if(id!=='host')throw Error('Quem criou a mesa inicia a partida.');
+   if(type==='rematch'){if(this.status()!=='over')throw Error('Aguarde o fim da partida.');this.state=null;}
+   else{
+    if(this.state)throw Error('A partida já começou.');if([...this.members.values()].some(v=>v.seat===null))throw Error('Todos precisam escolher um personagem.');
+    this.state=E.create({count:4,name:this.names[m.seat],partner:p.partner,difficulty:['easy','medium','hard'].includes(p.difficulty)?p.difficulty:'medium'});
+   }
+  }else{
+   if(revision!==this.revision)throw Error('A mesa mudou. Sua mão foi atualizada; tente novamente.');
+   if(!this.state||this.status()!=='playing'||m.seat===null||this.state.players[this.state.turn].name!==this.names[m.seat])throw Error('Aguarde sua vez.');
+   // Rejeições do motor não podem deixar uma mutação parcial na mesa.
+   const s=structuredClone(this.state),target=Number.isInteger(p.target)&&p.target>=0&&p.target<4?(s.turn+p.target)%4:-1;
+   if(this.game==='phase10'){
+    if(type==='pdraw')E.draw(s,p.source);
+    else if(type==='playphase'){if(!Array.isArray(p.ids))throw Error('Selecione as cartas da fase.');E.lay(s,p.ids);}
+    else if(type==='hit')E.hit(s,p.ci,target,p.group,p.side);
+    else if(type==='rearrange')E.rearrange(s,p.ids,target,p.group,p.lo);
+    else if(type==='discard')E.discard(s,p.ci,target);
+    else throw Error('Jogada inválida.');
+   }else{
+    if(type==='play'){if(!Number.isInteger(p.ci)||!Number.isInteger(p.i)||!E.play(s,p.ci,p.i))throw Error('Escolha uma casa válida para essa carta.');this.record(s,this.names[m.seat]+(s.last.remove?' removeu com ':' jogou ')+E.label(s.last.card)+(s.last.claims?' e formou sequência!':'.'));}
+    else if(type==='draw'){if(!E.finish(s))throw Error('Jogue antes de comprar.');}
+    else if(type==='exchange'){if(!Number.isInteger(p.ci)||!E.exchange(s,p.ci))throw Error('Essa carta não pode ser trocada.');this.record(s,this.names[m.seat]+' trocou uma carta morta.');}
+    else if(type==='pass'){if(!E.pass(s))throw Error('Você ainda tem uma jogada disponível.');this.record(s,this.names[m.seat]+' passou a vez.');}
+    else throw Error('Jogada inválida.');
+   }this.state=s;
+  }this.revision++;
+ }
+ needsBot(){const s=this.state;return !!s&&s.winner===null&&(s.phase==='round'||![...this.members.values()].some(m=>this.names[m.seat]===s.players[s.turn].name));}
+ bot(){if(!this.needsBot())return;const E=this.E,s=structuredClone(this.state);
+  if(this.game==='phase10')E.bot(s);
+  else if(s.phase==='draw')E.finish(s);
+  else{const name=s.players[s.turn].name,ci=s.hands[s.turn].findIndex(c=>E.dead(s,c));if(ci>=0&&!s.exchanged){E.exchange(s,ci);this.record(s,name+' trocou uma carta morta.');}const move=E.choose(s,s.config.difficulty);if(move){const last=E.play(s,move.ci,move.i);this.record(s,name+' jogou '+E.label(last.card)+(last.claims?' e formou sequência!':'.'));if(s.winner===null)E.finish(s);}else{E.pass(s);this.record(s,name+' passou a vez.');}}
+  this.state=s;this.revision++;
+ }
+ view(id){
+  const member=this.members.get(id);if(!member)throw Error('Mesa encerrada.');
+  let view=null;const s=this.state;
+  if(s&&member.seat!==null){
+   const viewer=s.players.findIndex(p=>p.name===this.names[member.seat]),order=[0,1,2,3].map(n=>(viewer+n)%4),index=i=>order.indexOf(i),team=s.players[viewer].team;
+   const people=order.map(i=>({...s.players[i],human:[...this.members.values()].some(m=>this.names[m.seat]===s.players[i].name),online:[...this.members.values()].some(m=>this.names[m.seat]===s.players[i].name)}));
+   view={...s,players:people,hands:order.map(i=>i===viewer?s.hands[i]:[]),handCounts:order.map(i=>s.hands[i].length),deck:[],deckCount:s.deck.length,turn:index(s.turn),dealer:index(s.dealer),last:s.last?{...s.last,player:index(s.last.player)}:null};
+   if(this.game==='phase10')Object.assign(view,{progress:order.map(i=>s.progress[i]),scores:order.map(i=>s.scores[i]),laid:order.map(i=>s.laid[i]),skips:order.map(i=>s.skips[i]),tiebreak:s.tiebreak?.map(index)||null,winner:s.winner===null?null:index(s.winner),roundResult:s.roundResult?{winner:index(s.roundResult.winner),penalties:order.map(i=>s.roundResult.penalties[i]),completed:order.map(i=>s.roundResult.completed[i])}:null});
+   else Object.assign(view,{players:people.map(p=>({...p,team:p.team===team?0:1})),board:s.board.map(v=>v===null?null:v===team?0:1),sequences:[s.sequences[team],s.sequences[1-team]],discards:order.map(i=>s.discards[i]),winner:typeof s.winner==='number'?(s.winner===team?0:1):s.winner});
+  }
+  return structuredClone({room:{id:'nearby',number:1,revision:this.revision,status:this.status()},host:id==='host',seat:member.seat,members:[...this.members].map(([key,m])=>({...m,you:key===id,online:true})),state:view,chat:this.chat});
+ }
+}
+
+/* Pareamento manual WebRTC: só candidatos locais, sem STUN, TURN ou sinalização externa. */
+const NearbyLink=(()=>{
+ let libraries;
+ function ready(){return libraries||(libraries=Promise.all(['fflate','qrcode','jsqr'].map(name=>new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='vendor/'+name+'.js';script.onload=resolve;script.onerror=()=>reject(Error('Abra o app uma vez com internet e aguarde a preparação offline.'));document.head.append(script);}))).catch(e=>{libraries=null;throw e;}));}
+ async function encode(value){await ready();const bytes=fflate.gzipSync(new TextEncoder().encode(JSON.stringify(value)));return 'NJ1.'+btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');}
+ async function decode(text){await ready();let code=String(text).trim();if(!code.startsWith('NJ1.')){try{code=new URL(code).hash.slice(1);}catch{}}
+  if(!/^NJ1\.[\w-]{20,8000}$/.test(code))throw Error('Código de pareamento inválido. Use o QR Code ou copie o código completo.');
+  let value;try{const bytes=Uint8Array.from(atob(code.slice(4).replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0));const raw=fflate.gunzipSync(bytes);if(raw.length>20000)throw Error();value=JSON.parse(new TextDecoder().decode(raw));}catch{throw Error('Código incompleto ou danificado. Copie novamente.');}
+  if(value.v!==1||!['offer','answer'].includes(value.kind)||!['sequence','phase10'].includes(value.game)||typeof value.id!=='string'||value.id.length>100||typeof value.nonce!=='string'||value.nonce.length>100||value.sdp?.type!==value.kind||typeof value.sdp.sdp!=='string')throw Error('Código de pareamento incompatível.');return value;
+ }
+ async function qr(canvas,code){await ready();const q=qrcode(0,'L');q.addData(code);q.make();const count=q.getModuleCount(),scale=Math.max(2,Math.floor(420/(count+8)));canvas.width=canvas.height=(count+8)*scale;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#10141e';for(let y=0;y<count;y++)for(let x=0;x<count;x++)if(q.isDark(y,x))ctx.fillRect((x+4)*scale,(y+4)*scale,scale,scale);}
+ function peer(onMessage,onState){
+  if(!window.RTCPeerConnection)throw Error('Este navegador não oferece conexão local. Use uma versão atual do Chrome ou Safari.');
+  const pc=new RTCPeerConnection({iceServers:[]}),link={pc,channel:null,closed:false,close(){if(link.closed)return;link.closed=true;clearTimeout(link.failure);link.channel?.close();pc.close();onState('closed',link);},send(value){if(link.channel?.readyState!=='open')throw Error('O aparelho está desconectado. Faça o pareamento novamente.');const text=JSON.stringify(value);if(text.length>100000)throw Error('Mensagem muito grande.');link.channel.send(text);}};
+  function attach(channel){link.channel=channel;channel.onopen=()=>onState('open',link);channel.onclose=()=>link.close();channel.onerror=()=>link.close();channel.onmessage=event=>{if(typeof event.data!=='string'||event.data.length>100000)return;try{onMessage(JSON.parse(event.data),link);}catch(e){console.warn('Mensagem local rejeitada:',e.message);}};}
+  pc.ondatachannel=event=>attach(event.channel);link.attach=attach;
+  pc.onconnectionstatechange=()=>{clearTimeout(link.failure);if(pc.connectionState==='failed')link.close();else if(pc.connectionState==='disconnected')link.failure=setTimeout(()=>link.close(),10000);};
+  return link;
+ }
+ async function gather(link,description){
+  await link.pc.setLocalDescription(description);
+  if(link.pc.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>finish(),7000);const change=()=>{if(link.pc.iceGatheringState==='complete')finish();};function finish(){clearTimeout(timeout);link.pc.removeEventListener('icegatheringstatechange',change);link.closed?reject(Error('Pareamento cancelado.')):resolve();}link.pc.addEventListener('icegatheringstatechange',change);});
+  const sdp=link.pc.localDescription;if(!sdp?.sdp.includes('a=candidate:'))throw Error('Não encontramos uma rede local. Ative o Wi-Fi e conecte os aparelhos à mesma rede ou hotspot.');return {type:sdp.type,sdp:sdp.sdp};
+ }
+ async function scan(container,onCode,onError){
+  await ready();if(!navigator.mediaDevices?.getUserMedia)throw Error('A câmera exige o app aberto por HTTPS. Você também pode colar o código.');
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:640}},audio:false});
+  const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;video.srcObject=stream;container.replaceChildren(video);const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});let stopped=false,last=0,frame;
+  const stop=()=>{if(stopped)return;stopped=true;cancelAnimationFrame(frame);stream.getTracks().forEach(t=>t.stop());video.srcObject=null;container.replaceChildren();};
+  try{await video.play();}catch(e){stop();throw e;}
+  function read(now){if(stopped)return;if(now-last>220&&video.readyState>=2){last=now;canvas.width=Math.min(640,video.videoWidth);canvas.height=Math.round(video.videoHeight*canvas.width/video.videoWidth);ctx.drawImage(video,0,0,canvas.width,canvas.height);try{const data=ctx.getImageData(0,0,canvas.width,canvas.height),result=jsQR(data.data,data.width,data.height,{inversionAttempts:'dontInvert'});if(result){stop();onCode(result.data);return;}}catch(e){stop();onError(e);return;}}frame=requestAnimationFrame(read);}frame=requestAnimationFrame(read);return stop;
+ }
+ return {ready,encode,decode,qr,peer,gather,scan};
+})();
+
 /* Instalação e atualizações do aplicativo, reutilizando a mesma página. */
 (() => {
  if (!('serviceWorker' in navigator) || !['http:','https:'].includes(location.protocol)) return;
@@ -775,7 +881,8 @@ const NightMetrics = (() => {
  function offerUpdate() {
   if (!registration?.waiting) return;
   showTip('Uma nova versão do Noite de Jogos está disponível.', () => {
-   const gameVisible = !document.getElementById('game')?.classList.contains('hidden');
+   const game = document.getElementById('game');
+   const gameVisible = !!game && !game.classList.contains('hidden');
    if (gameVisible && (!window.NightAppSession || window.NightAppSession.active)) {
     showTip('Finalize a partida e volte à tela inicial para atualizar.');
     return;
@@ -792,7 +899,7 @@ const NightMetrics = (() => {
   installButton();
   try {
    registration=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
-   navigator.serviceWorker.ready.then(()=>document.documentElement.dataset.appCache='ready');
+   navigator.serviceWorker.ready.then(()=>{document.documentElement.dataset.appCache='ready';window.dispatchEvent(new Event('night-cache-ready'));});
    offerUpdate();
    registration.addEventListener('updatefound',()=>{
     const worker=registration.installing;
@@ -807,7 +914,7 @@ const NightMetrics = (() => {
  window.addEventListener('online',()=>document.body.classList.remove('app-offline'));
  window.addEventListener('offline',()=>{
   document.body.classList.add('app-offline');
-  showTip('Sem conexão. As salas e a voz voltam quando a internet retornar. Você pode jogar com bots na opção Só eu e bots.');
+  if(new URLSearchParams(location.search).get('nearby')!=='1')showTip('Sem internet. Use Offline · bots ou Amigos próximos no mesmo Wi-Fi/hotspot. A voz da sala on-line precisa de internet.');
  });
 })();
 
@@ -815,6 +922,14 @@ const GAME=new URLSearchParams(location.search).get('game');
 function nightHub(){
  document.body.classList.add('hub-body');document.querySelector('main').innerHTML='<section class="night-hub"><div class="hub-intro"><span class="eyebrow">A MELHOR PARTE DO DIA COMEÇA AQUI</span><h1>Noite de <em>Jogos.</em></h1><p>Puxe uma cadeira. A família já está com as cartas na mão.</p></div><div class="game-choices"><a class="game-choice sequence-choice" href="?game=sequence"><div class="choice-art sequence-art"><div class="mini-board">'+Array.from({length:25},(_,i)=>'<i class="'+([0,6,12,18,24].includes(i)?'gold-chip':i%7===0?'blue-chip':'')+'">'+['♠','♥','♦','♣'][i%4]+'</i>').join('')+'</div></div><div class="choice-copy"><span class="eyebrow">ESTRATÉGIA EM DUPLA</span><h2>Sequence</h2><p>Conecte cinco. Bloqueie o rival.<br>Defenda a honra da sua dupla.</p><span class="choice-enter">Sentar à mesa <b>↗</b></span></div></a><a class="game-choice phase-choice" href="?game=phase10"><div class="choice-art phase-art"><span class="show-card sc-red">7</span><span class="show-card sc-blue">8</span><span class="show-card sc-gold">9</span><span class="show-card sc-green">10</span></div><div class="choice-copy"><span class="eyebrow">DEZ FASES. MIL DESCULPAS.</span><h2>Phase 10</h2><p>Monte sua fase. Esvazie a mão.<br>Hoje é cada um por si.</p><span class="choice-enter">Entrar na rodada <b>↗</b></span></div></a></div><div class="hub-family">'+Family.names.map(n=>'<div data-intro="'+n+'">'+Family.avatar(n)+'<span>'+n+'</span></div>').join('')+'<p>Quatro personagens.<br><strong>Resenha sem limite.</strong></p></div><p class="hub-foot">1–4 pessoas · bots nas vagas · chat na mesa</p></section>';
  document.querySelector('.brand').innerHTML='<b>✦</b><span>NOITE DE JOGOS<small>A FAMÍLIA TEM LUGAR MARCADO</small></span>';document.querySelector('.topbar nav').replaceChildren();
+ const modes=document.createElement('div');modes.className='hub-modes';modes.setAttribute('aria-label','Como jogar');
+ const hint=document.createElement('p');hint.className='hub-mode-hint';
+ const choices=[['On-line',''],['Offline · bots','&solo=1'],['Amigos próximos','&nearby=1']];
+ function chooseMode(suffix){for(const a of document.querySelectorAll('.game-choice')){const game=a.classList.contains('phase-choice')?'phase10':'sequence';a.href='?game='+game+suffix;}for(const b of modes.children)b.setAttribute('aria-pressed',String(b.dataset.mode===suffix));hint.textContent=suffix==='&nearby=1'?'Mesmo Wi-Fi ou hotspot · convite por QR Code · sem internet':suffix==='&solo=1'?'Você e os bots · partida salva neste aparelho · sem internet':'Sala da família · requer internet';}
+ for(const [label,suffix] of choices){const b=document.createElement('button');b.type='button';b.className='quiet';b.dataset.mode=suffix;b.textContent=label;b.onclick=()=>chooseMode(suffix);modes.append(b);}
+ document.querySelector('.hub-intro').append(modes,hint);chooseMode(navigator.onLine?'':'&solo=1');
+ const cache=document.createElement('span');cache.id='offline-ready';cache.className='offline-ready';cache.textContent='Preparando o app para usar sem internet…';document.querySelector('.hub-foot').append(document.createElement('br'),cache);
+ const paintCache=()=>{if(document.documentElement.dataset.appCache==='ready')cache.textContent='✓ Jogos preparados para abrir sem internet neste aparelho';};paintCache();window.addEventListener('night-cache-ready',paintCache);
  const adjust=()=>document.documentElement.style.setProperty('--app-height',(window.visualViewport?.height||innerHeight)+'px');adjust();window.visualViewport?.addEventListener('resize',adjust);
  setTimeout(()=>Speech.say('Iverson','Está valendo a honra. Escolhe a mesa!'),1500);
 }
@@ -940,9 +1055,149 @@ installHandDrag();
 
 createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
 
+/* Executado no mesmo escopo da interface dos jogos. */
+function startNearby(){
+ const setup=$('setup'),startButton=setup.querySelector('button[type=submit]'),saveKey='night-nearby-'+GAME;
+ let table=null,role=null,info=null,revision=-1,guest=null,pendingOffer=null,scanStop=null,scanGeneration=0,botTimer=null,botKey='',ended=false,busy=false,closed=false,wake=null;
+ const peers=new Map(),requests=new Map();let serial=0,lastChat=0;
+ const bar=document.createElement('div');bar.className='online-actions';bar.innerHTML='<button type="button" class="secondary" id="near-create">Criar mesa próxima</button><button type="button" class="secondary" id="near-join">Entrar por convite</button><button type="button" class="quiet" id="near-invite" hidden>Convidar amigo</button>';
+ const note=document.createElement('p');note.className='lineup';note.setAttribute('role','status');setup.prepend(note);setup.append(bar);
+ const menuButton=document.createElement('button');menuButton.className='quiet';menuButton.textContent='Mesa próxima';document.querySelector('.topbar nav').prepend(menuButton);
+ const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da mesa próxima');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Mesa próxima</span><input id="chat-input" maxlength="300" aria-label="Mensagem para a mesa" placeholder="Fale com a mesa…" autocomplete="off"><button type="submit" class="primary">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
+ const prompt=new Option('Escolha seu personagem…','');prompt.disabled=true;$('character').prepend(prompt);$('character').value='';$('character').disabled=true;startButton.disabled=true;toggle('continue',false);$('chat-input').disabled=true;$('chat-form').querySelector('button').disabled=true;
+ setup.querySelector('h2').textContent='A família está por perto';note.textContent='Conectem todos ao mesmo Wi-Fi ou hotspot. Criem uma mesa e troquem os códigos de convite e resposta. Não precisa de internet.';
+ async function keepAwake(){try{if(role==='host'&&navigator.wakeLock&&!document.hidden){await wake?.release();wake=await navigator.wakeLock.request('screen');}}catch{}}
+ function persist(){if(!table)return;try{localStorage.setItem(saveKey,JSON.stringify({v:1,game:GAME,seat:table.members.get('host').seat,state:table.state}));}catch{}}
+ function scheduleBot(){
+  if(!table)return;const key=table.needsBot()?JSON.stringify([table.state.turn,table.state.move,table.state.phase,table.state.round]):'';
+  if(key===botKey)return;botKey=key;clearTimeout(botTimer);if(!key)return;
+  botTimer=setTimeout(()=>{botKey='';if(closed||!table.needsBot())return;try{table.bot();broadcast();}catch(e){toast('A mesa pausou: '+e.message);}},table.state.phase==='round'?12000:5200);
+ }
+ function broadcast(){if(!table||closed)return;persist();apply(table.view('host'));for(const [id,link] of peers)if(link.channel?.readyState==='open')link.send({type:'snapshot',snapshot:table.view(id)});scheduleBot();}
+ function apply(next){
+  if(closed||next.room.revision<revision)return;const previous=state;info=next;revision=next.room.revision;
+  $('near-create').hidden=!!role;$('near-join').hidden=!!role;$('near-invite').hidden=role!=='host';
+  setup.querySelector('h2').textContent='Mesa próxima · '+next.members.length+'/4 pessoas';
+  const chosen=Number.isInteger(next.seat);$('character').value=chosen?Family.names[next.seat]:'';
+  $('character').disabled=next.room.status!=='waiting'&&chosen;
+  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=seat<0||next.members.some(m=>m.seat===seat&&!m.you);}
+  $('companion').disabled=role!=='host'||next.room.status!=='waiting';setup.querySelectorAll('input[name=difficulty]').forEach(el=>el.disabled=role!=='host'||next.room.status!=='waiting');
+  startButton.disabled=role!=='host'||next.room.status!=='waiting'||next.members.some(m=>m.seat===null);
+  startButton.textContent=!chosen?'Escolha seu personagem':role==='host'?'Começar com '+(4-next.members.length)+' bot(s)':'Aguardando quem criou a mesa';
+  note.textContent=role==='host'?'Convide até três amigos. Vagas livres ficam com bots. Mantenha este aparelho aberto e desbloqueado.':'Conexão direta com a mesa. Escolha um personagem livre; mantenha o app aberto durante a partida.';
+  $('chat-input').disabled=!chosen;$('chat-form').querySelector('button').disabled=!chosen;
+  for(const m of next.chat)if(m.id>lastChat){if(Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);lastChat=m.id;}
+  $('chat-messages').replaceChildren();for(const m of next.chat.slice(-3)){const p=document.createElement('p'),n=document.createElement('strong'),b=document.createElement('span');n.textContent=m.speaker+': ';b.textContent=m.body;p.append(n,b);$('chat-messages').append(p);}
+  updateLineup();
+  window.NightAppSession={active:next.room.status==='playing',mode:'nearby'};
+  if(next.state){
+   const keepSelection=previous&&previous.turn===next.state.turn&&previous.phase===next.state.phase&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
+   state=next.state;if(!keepSelection){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
+   if($('game').classList.contains('hidden')){closeModal();showGame();}else render();
+   $('game-mode').textContent='MESA PRÓXIMA · '+(GAME==='phase10'?'PHASE 10':'DUPLAS');queueFit();
+   if(previous&&state.move>previous.move)audio.fx(state.winner!==null?'win':state.last?.claims?'sequence':'place');
+   if(state.winner!==null&&!ended){ended=true;setTimeout(()=>{if(!closed&&state?.winner!==null)multiplayer.result();},400);}
+  }else if(next.room.status==='waiting'){
+   state=null;ended=false;clearTimeout(timer);toggle('home',true);toggle('game',false);toggle('pause',false);if(previous){closeModal();nextChat();}
+  }
+ }
+ function decorateLobby(){if(!info)return;document.querySelectorAll('[data-intro]').forEach(el=>{const seat=Family.names.indexOf(el.dataset.intro),m=info.members.find(m=>m.seat===seat);el.classList.toggle('taken',!!m&&!m.you);el.querySelector('small').textContent=m?(m.you?'Você':'Amigo conectado'):'Bot · lugar livre';});}
+ async function action(type,params={}){
+  if(type==='leave'){shutdown();return true;}if(closed)return false;
+  const gameplay=!['pick','chat','start','rematch'].includes(type);if(gameplay&&busy)return false;
+  try{
+   if(!role)throw Error('Crie uma mesa ou aceite um convite primeiro.');
+   if(role==='host'){table.dispatch('host',type,params,revision);broadcast();return true;}
+   if(guest?.channel?.readyState!=='open')throw Error('Reconecte-se à mesa usando um novo convite.');
+   const id=String(++serial);if(gameplay){busy=true;render();}
+   return await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{requests.delete(id);reject(Error('A mesa não respondeu. Verifique o Wi-Fi e o aparelho que criou a mesa.'));},8000);requests.set(id,{resolve,reject,timeout});try{guest.send({type:'action',id,revision,action:type,params});}catch(e){clearTimeout(timeout);requests.delete(id);reject(e);}});
+  }catch(e){toast(e.message);return false;}finally{if(gameplay){busy=false;if(state)render();}}
+ }
+ function onHostMessage(id,message,link){
+  if(message?.type!=='action'||!table?.members.has(id)||typeof message.id!=='string'||message.id.length>40)return;
+  if(JSON.stringify(message).length>4000)return;
+  let error=null;try{if(['leave','tick'].includes(message.action))throw Error('Ação inválida.');if(Date.now()-(link.lastAction||0)<80)throw Error('Aguarde um instante.');link.lastAction=Date.now();table.dispatch(id,message.action,message.params||{},message.revision);}catch(e){error=e.message;}
+  link.send({type:'ack',id:message.id,ok:!error,error,snapshot:table.view(id)});if(!error)broadcast();
+ }
+ function onGuestMessage(message){
+  if(message?.type==='snapshot')apply(message.snapshot);
+  if(message?.type==='ack'){if(message.snapshot)apply(message.snapshot);const request=requests.get(message.id);if(request){clearTimeout(request.timeout);requests.delete(message.id);message.ok?request.resolve(true):request.reject(Error(message.error||'Jogada recusada.'));}}
+  if(message?.type==='closed'){guest?.close();toast('Quem criou a mesa saiu. Crie uma nova mesa para continuar.');}
+ }
+ function create(restore=false){
+  if(role)return;role='host';table=new NearbyTable(E,GAME,Family.names);
+  if(restore){try{const old=JSON.parse(localStorage.getItem(saveKey)||'null');if(old?.v===1&&old.game===GAME&&old.state){table.state=old.state;table.members.get('host').seat=old.seat;}}catch{}}
+  closeModal();keepAwake();broadcast();
+ }
+ function stopScan(){scanGeneration++;scanStop?.();scanStop=null;}
+ $('modal').addEventListener('close',stopScan);
+ async function showPair(title,text,code,accept){
+  stopScan();showModal('<section class="near-pair"><h2>'+title+'</h2><p>'+text+'</p>'+(code?'<canvas id="near-qr" aria-label="QR Code de pareamento"></canvas><details><summary>Copiar código manualmente</summary><textarea id="near-out" readonly aria-label="Código para compartilhar"></textarea><button class="quiet" id="near-copy">Copiar código</button></details>':'')+(accept?'<label class="field">Código recebido<textarea id="near-in" placeholder="Cole o código NJ1…" aria-label="Código recebido"></textarea></label><div class="actions"><button class="secondary" id="near-scan">Ler QR Code</button><button class="primary" id="near-accept">Usar código</button></div><div id="near-camera"></div>':'')+'<p id="near-pair-status" role="status"></p><p class="muted">Mesmo Wi-Fi ou hotspot, inclusive sem internet. Redes de convidados podem bloquear a conexão entre aparelhos.</p></section>');
+  const status=$('near-pair-status');
+  if(code){$('near-out').value=code;$('near-copy').onclick=async()=>{try{await navigator.clipboard.writeText(code);status.textContent='Código copiado.';}catch{$('near-out').select();status.textContent='Segure o código selecionado e toque em Copiar.';}};try{await NearbyLink.qr($('near-qr'),code);}catch(e){status.textContent=e.message;}}
+  if(role==='host'&&pendingOffer&&code){const cancel=document.createElement('button');cancel.type='button';cancel.className='quiet';cancel.textContent='Cancelar este convite';cancel.onclick=()=>{pendingOffer?.link.close();closeModal();};status.after(cancel);}
+  if(!accept)return;
+  const submit=async value=>{stopScan();const button=$('near-accept');if(!button)return;button.disabled=true;status.textContent='Conectando os aparelhos…';try{await accept(value);}catch(e){status.textContent=e.message;}finally{if(button.isConnected)button.disabled=false;}};
+  $('near-accept').onclick=()=>submit($('near-in').value);
+  $('near-scan').onclick=async()=>{stopScan();const gen=scanGeneration;status.textContent='Aponte a câmera para o QR Code do outro aparelho.';try{const stop=await NearbyLink.scan($('near-camera'),submit,e=>status.textContent=e.message);if(gen!==scanGeneration)stop();else scanStop=stop;}catch(e){status.textContent='Câmera indisponível. Cole o código manualmente. '+e.message;}};
+ }
+ async function invite(){
+  try{
+   if(role!=='host')throw Error('Crie a mesa primeiro.');if(peers.size>=3&&!pendingOffer)throw Error('A mesa já tem três convidados.');
+   if(!pendingOffer){
+    const id=crypto.randomUUID(),nonce=crypto.randomUUID();
+    const link=NearbyLink.peer((m,l)=>onHostMessage(id,m,l),(status,l)=>{
+     if(status==='open'){if(closed){l.close();return;}try{table.add(id);}catch{l.close();return;}pendingOffer=null;closeModal();broadcast();toast('Amigo conectado. Escolha um personagem livre.');}
+     else if(status==='closed'){peers.delete(id);if(pendingOffer?.id===id)pendingOffer=null;if(table?.members.has(id)){table.remove(id);broadcast();toast('Um amigo desconectou. Um bot assumiu o lugar.');}}
+    });peers.set(id,link);link.attach(link.pc.createDataChannel('noite-de-jogos',{ordered:true}));
+    pendingOffer={id,nonce,link,code:null};note.textContent='Preparando convite local…';const sdp=await NearbyLink.gather(link,await link.pc.createOffer());
+    if(link.closed)throw Error('Convite cancelado.');pendingOffer.code=await NearbyLink.encode({v:1,game:GAME,kind:'offer',id,nonce,sdp});
+   }
+   const offer=pendingOffer;if(!offer.code)return;
+   await showPair('Convide um amigo','1. Seu amigo lê este convite. 2. Ele mostra a resposta. 3. Leia a resposta aqui para concluir.',offer.code,async text=>{
+    const answer=await NearbyLink.decode(text);if(answer.kind!=='answer'||answer.game!==GAME||answer.id!==offer.id||answer.nonce!==offer.nonce)throw Error('Essa resposta pertence a outro convite. Use o convite desta tela.');
+    await offer.link.pc.setRemoteDescription(answer.sdp);$('near-pair-status').textContent='Resposta aceita. Aguardando conexão local. Se não conectar, confira se a rede permite comunicação entre aparelhos.';
+   });
+  }catch(e){if(pendingOffer&&!pendingOffer.code)pendingOffer.link.close();toast(e.message);}
+ }
+ async function joinCode(text){
+  if(role||guest)throw Error('Você já tem um pareamento em andamento. Recarregue a página para aceitar outro convite.');
+  const offer=await NearbyLink.decode(text);if(offer.kind!=='offer'||offer.game!==GAME)throw Error('Abra o mesmo jogo do convite e leia o QR Code de convite.');
+  const link=NearbyLink.peer(onGuestMessage,status=>{
+   if(status==='open'){role='guest';closeModal();toast('Conectado à mesa próxima.');}
+   if(status==='closed'){if(guest===link)guest=null;for(const request of requests.values()){clearTimeout(request.timeout);request.reject(Error('Conexão local interrompida.'));}requests.clear();startButton.disabled=true;$('character').disabled=true;note.textContent='A mesa desconectou. Peça um novo convite e recarregue esta página para parear novamente.';if(state){busy=true;render();}toast('Conexão local interrompida. Peça um novo convite.');}
+  });guest=link;
+  try{await link.pc.setRemoteDescription(offer.sdp);const sdp=await NearbyLink.gather(link,await link.pc.createAnswer()),code=await NearbyLink.encode({...offer,kind:'answer',sdp});
+   await showPair('Mostre sua resposta','Agora quem criou a mesa deve ler este QR Code no próprio aparelho. Aguarde a conexão terminar.',code,null);
+  }catch(e){link.close();throw e;}
+ }
+ function join(){showPair('Entrar na mesa próxima','Peça para quem criou a mesa tocar em Convidar amigo. Leia o convite ou cole o código abaixo.',null,joinCode);}
+ function shutdown(){if(closed)return;closed=true;stopScan();clearTimeout(botTimer);persist();for(const link of peers.values()){try{link.send({type:'closed'});}catch{}link.close();}guest?.close();wake?.release().catch(()=>{});for(const request of requests.values()){clearTimeout(request.timeout);request.resolve(false);}requests.clear();}
+ function menu(){showModal('<h2>Mesa próxima</h2><p>'+ (role==='host'?'Mantenha este aparelho aberto e desbloqueado. Os amigos conectam diretamente a ele.':'A mesa continua enquanto este menu está aberto.')+'</p><div class="actions"><button class="primary" id="near-resume">Voltar</button>'+(role==='host'?'<button class="secondary" id="near-add">Convidar amigo</button>':'')+'<button class="quiet" id="near-exit">Sair da mesa</button></div>');$('near-resume').onclick=closeModal;if($('near-add'))$('near-add').onclick=invite;$('near-exit').onclick=()=>{shutdown();location.assign(location.pathname);};}
+ multiplayer={enabled:true,action,decorateLobby,get pending(){return busy||closed;},start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),menu,result:()=>{
+  if(GAME==='phase10'){phaseResult(info);return;}
+  showModal('<div class="result">'+finaleMarkup()+'<h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(role==='host'?'<button class="primary" id="near-rematch">Jogar outra</button>':'<p>Aguardando quem criou a mesa.</p>')+'<button class="secondary" id="near-result-exit">Sair da mesa</button></div></div>');if($('near-rematch'))$('near-rematch').onclick=()=>action('rematch');$('near-result-exit').onclick=()=>{shutdown();location.assign(location.pathname);};
+ }};
+ $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
+ $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
+ $('near-create').onclick=()=>{let old;try{old=JSON.parse(localStorage.getItem(saveKey)||'null');}catch{}if(old?.state?.winner===null){showModal('<h2>Retomar a mesa próxima?</h2><p>A partida ficou salva neste aparelho. Amigos precisam de novos convites. Vagas sem amigos ficam com bots.</p><div class="actions"><button id="near-restore" class="primary">Retomar partida</button><button id="near-new" class="secondary">Criar nova mesa</button></div>');$('near-restore').onclick=()=>create(true);$('near-new').onclick=()=>create();}else create();};
+ $('near-join').onclick=join;$('near-invite').onclick=invite;menuButton.onclick=()=>role?menu():join();
+ $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(text&&await action('chat',{text}))if(input.value.trim()===text)input.value='';};
+ $('brand').onclick=e=>{e.preventDefault();if(role)menu();else location.assign(location.pathname);};
+ window.addEventListener('pagehide',shutdown);document.addEventListener('visibilitychange',()=>{if(!document.hidden){keepAwake();scheduleBot();if(state)render();}else stopScan();});
+ const code=location.hash.slice(1);if(code.startsWith('NJ1.')){history.replaceState(null,'',location.pathname+location.search);joinCode(code).catch(e=>toast(e.message));}
+ updateLineup();
+}
+
 'use strict';
 // O navegador envia intenções; cartas, bots e validação ficam no servidor.
 (()=>{
+ const params=new URLSearchParams(location.search);
+ const modes=document.createElement('div');modes.className='online-actions game-modes';
+ for(const [label,suffix] of [['On-line',''],['Offline · bots','&solo=1'],['Amigos próximos','&nearby=1']]){const a=document.createElement('a');a.className='quiet';a.textContent=label;a.href=location.pathname+'?game='+GAME+suffix;modes.append(a);}
+ $('setup').append(modes);
+ if(params.get('nearby')==='1'){startNearby();return;}
+ if(!navigator.onLine&&params.get('solo')!=='1'){location.replace(location.pathname+'?game='+GAME+'&solo=1');return;}
  const solo=new URLSearchParams(location.search).get('solo')==='1';
  const button=document.createElement('button');button.className='quiet';button.id='room-chat-button';button.textContent=solo?'On-line':'Chat';document.querySelector('.topbar nav').prepend(button);
  if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
@@ -1165,7 +1420,8 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
  $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
  $('reconnect').onclick=join;
  const originalBrand=$('brand').onclick;$('brand').onclick=async e=>{e.preventDefault();if(!info||await action('leave'))location.assign(location.pathname);};
- $('play-solo').onclick=async()=>{if(!info||await action('leave'))location.assign(location.pathname+'?game='+GAME+'&solo=1');};
+ // A saída local deve funcionar mesmo se a sala estiver sem conexão.
+ $('play-solo').onclick=()=>{voice.stop();location.assign(location.pathname+'?game='+GAME+'&solo=1');};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(botTimer);else if(info)action('heartbeat');});
  window.addEventListener('online',()=>{if(info)action('heartbeat');else join();});
  window.addEventListener('pagehide',()=>{if(lastToken&&info)fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+lastToken},body:JSON.stringify({type:'leave',game:GAME,joinStamp:info.joinStamp})}).catch(()=>{});});
@@ -1469,9 +1725,149 @@ if(new URLSearchParams(location.search).get("solo")==="1")$("brand").onclick=e=>
 
 createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
 
+/* Executado no mesmo escopo da interface dos jogos. */
+function startNearby(){
+ const setup=$('setup'),startButton=setup.querySelector('button[type=submit]'),saveKey='night-nearby-'+GAME;
+ let table=null,role=null,info=null,revision=-1,guest=null,pendingOffer=null,scanStop=null,scanGeneration=0,botTimer=null,botKey='',ended=false,busy=false,closed=false,wake=null;
+ const peers=new Map(),requests=new Map();let serial=0,lastChat=0;
+ const bar=document.createElement('div');bar.className='online-actions';bar.innerHTML='<button type="button" class="secondary" id="near-create">Criar mesa próxima</button><button type="button" class="secondary" id="near-join">Entrar por convite</button><button type="button" class="quiet" id="near-invite" hidden>Convidar amigo</button>';
+ const note=document.createElement('p');note.className='lineup';note.setAttribute('role','status');setup.prepend(note);setup.append(bar);
+ const menuButton=document.createElement('button');menuButton.className='quiet';menuButton.textContent='Mesa próxima';document.querySelector('.topbar nav').prepend(menuButton);
+ const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da mesa próxima');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Mesa próxima</span><input id="chat-input" maxlength="300" aria-label="Mensagem para a mesa" placeholder="Fale com a mesa…" autocomplete="off"><button type="submit" class="primary">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
+ const prompt=new Option('Escolha seu personagem…','');prompt.disabled=true;$('character').prepend(prompt);$('character').value='';$('character').disabled=true;startButton.disabled=true;toggle('continue',false);$('chat-input').disabled=true;$('chat-form').querySelector('button').disabled=true;
+ setup.querySelector('h2').textContent='A família está por perto';note.textContent='Conectem todos ao mesmo Wi-Fi ou hotspot. Criem uma mesa e troquem os códigos de convite e resposta. Não precisa de internet.';
+ async function keepAwake(){try{if(role==='host'&&navigator.wakeLock&&!document.hidden){await wake?.release();wake=await navigator.wakeLock.request('screen');}}catch{}}
+ function persist(){if(!table)return;try{localStorage.setItem(saveKey,JSON.stringify({v:1,game:GAME,seat:table.members.get('host').seat,state:table.state}));}catch{}}
+ function scheduleBot(){
+  if(!table)return;const key=table.needsBot()?JSON.stringify([table.state.turn,table.state.move,table.state.phase,table.state.round]):'';
+  if(key===botKey)return;botKey=key;clearTimeout(botTimer);if(!key)return;
+  botTimer=setTimeout(()=>{botKey='';if(closed||!table.needsBot())return;try{table.bot();broadcast();}catch(e){toast('A mesa pausou: '+e.message);}},table.state.phase==='round'?12000:5200);
+ }
+ function broadcast(){if(!table||closed)return;persist();apply(table.view('host'));for(const [id,link] of peers)if(link.channel?.readyState==='open')link.send({type:'snapshot',snapshot:table.view(id)});scheduleBot();}
+ function apply(next){
+  if(closed||next.room.revision<revision)return;const previous=state;info=next;revision=next.room.revision;
+  $('near-create').hidden=!!role;$('near-join').hidden=!!role;$('near-invite').hidden=role!=='host';
+  setup.querySelector('h2').textContent='Mesa próxima · '+next.members.length+'/4 pessoas';
+  const chosen=Number.isInteger(next.seat);$('character').value=chosen?Family.names[next.seat]:'';
+  $('character').disabled=next.room.status!=='waiting'&&chosen;
+  for(const option of $('character').options){const seat=Family.names.indexOf(option.value);option.disabled=seat<0||next.members.some(m=>m.seat===seat&&!m.you);}
+  $('companion').disabled=role!=='host'||next.room.status!=='waiting';setup.querySelectorAll('input[name=difficulty]').forEach(el=>el.disabled=role!=='host'||next.room.status!=='waiting');
+  startButton.disabled=role!=='host'||next.room.status!=='waiting'||next.members.some(m=>m.seat===null);
+  startButton.textContent=!chosen?'Escolha seu personagem':role==='host'?'Começar com '+(4-next.members.length)+' bot(s)':'Aguardando quem criou a mesa';
+  note.textContent=role==='host'?'Convide até três amigos. Vagas livres ficam com bots. Mantenha este aparelho aberto e desbloqueado.':'Conexão direta com a mesa. Escolha um personagem livre; mantenha o app aberto durante a partida.';
+  $('chat-input').disabled=!chosen;$('chat-form').querySelector('button').disabled=!chosen;
+  for(const m of next.chat)if(m.id>lastChat){if(Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);lastChat=m.id;}
+  $('chat-messages').replaceChildren();for(const m of next.chat.slice(-3)){const p=document.createElement('p'),n=document.createElement('strong'),b=document.createElement('span');n.textContent=m.speaker+': ';b.textContent=m.body;p.append(n,b);$('chat-messages').append(p);}
+  updateLineup();
+  window.NightAppSession={active:next.room.status==='playing',mode:'nearby'};
+  if(next.state){
+   const keepSelection=previous&&previous.turn===next.state.turn&&previous.phase===next.state.phase&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
+   state=next.state;if(!keepSelection){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
+   if($('game').classList.contains('hidden')){closeModal();showGame();}else render();
+   $('game-mode').textContent='MESA PRÓXIMA · '+(GAME==='phase10'?'PHASE 10':'DUPLAS');queueFit();
+   if(previous&&state.move>previous.move)audio.fx(state.winner!==null?'win':state.last?.claims?'sequence':'place');
+   if(state.winner!==null&&!ended){ended=true;setTimeout(()=>{if(!closed&&state?.winner!==null)multiplayer.result();},400);}
+  }else if(next.room.status==='waiting'){
+   state=null;ended=false;clearTimeout(timer);toggle('home',true);toggle('game',false);toggle('pause',false);if(previous){closeModal();nextChat();}
+  }
+ }
+ function decorateLobby(){if(!info)return;document.querySelectorAll('[data-intro]').forEach(el=>{const seat=Family.names.indexOf(el.dataset.intro),m=info.members.find(m=>m.seat===seat);el.classList.toggle('taken',!!m&&!m.you);el.querySelector('small').textContent=m?(m.you?'Você':'Amigo conectado'):'Bot · lugar livre';});}
+ async function action(type,params={}){
+  if(type==='leave'){shutdown();return true;}if(closed)return false;
+  const gameplay=!['pick','chat','start','rematch'].includes(type);if(gameplay&&busy)return false;
+  try{
+   if(!role)throw Error('Crie uma mesa ou aceite um convite primeiro.');
+   if(role==='host'){table.dispatch('host',type,params,revision);broadcast();return true;}
+   if(guest?.channel?.readyState!=='open')throw Error('Reconecte-se à mesa usando um novo convite.');
+   const id=String(++serial);if(gameplay){busy=true;render();}
+   return await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{requests.delete(id);reject(Error('A mesa não respondeu. Verifique o Wi-Fi e o aparelho que criou a mesa.'));},8000);requests.set(id,{resolve,reject,timeout});try{guest.send({type:'action',id,revision,action:type,params});}catch(e){clearTimeout(timeout);requests.delete(id);reject(e);}});
+  }catch(e){toast(e.message);return false;}finally{if(gameplay){busy=false;if(state)render();}}
+ }
+ function onHostMessage(id,message,link){
+  if(message?.type!=='action'||!table?.members.has(id)||typeof message.id!=='string'||message.id.length>40)return;
+  if(JSON.stringify(message).length>4000)return;
+  let error=null;try{if(['leave','tick'].includes(message.action))throw Error('Ação inválida.');if(Date.now()-(link.lastAction||0)<80)throw Error('Aguarde um instante.');link.lastAction=Date.now();table.dispatch(id,message.action,message.params||{},message.revision);}catch(e){error=e.message;}
+  link.send({type:'ack',id:message.id,ok:!error,error,snapshot:table.view(id)});if(!error)broadcast();
+ }
+ function onGuestMessage(message){
+  if(message?.type==='snapshot')apply(message.snapshot);
+  if(message?.type==='ack'){if(message.snapshot)apply(message.snapshot);const request=requests.get(message.id);if(request){clearTimeout(request.timeout);requests.delete(message.id);message.ok?request.resolve(true):request.reject(Error(message.error||'Jogada recusada.'));}}
+  if(message?.type==='closed'){guest?.close();toast('Quem criou a mesa saiu. Crie uma nova mesa para continuar.');}
+ }
+ function create(restore=false){
+  if(role)return;role='host';table=new NearbyTable(E,GAME,Family.names);
+  if(restore){try{const old=JSON.parse(localStorage.getItem(saveKey)||'null');if(old?.v===1&&old.game===GAME&&old.state){table.state=old.state;table.members.get('host').seat=old.seat;}}catch{}}
+  closeModal();keepAwake();broadcast();
+ }
+ function stopScan(){scanGeneration++;scanStop?.();scanStop=null;}
+ $('modal').addEventListener('close',stopScan);
+ async function showPair(title,text,code,accept){
+  stopScan();showModal('<section class="near-pair"><h2>'+title+'</h2><p>'+text+'</p>'+(code?'<canvas id="near-qr" aria-label="QR Code de pareamento"></canvas><details><summary>Copiar código manualmente</summary><textarea id="near-out" readonly aria-label="Código para compartilhar"></textarea><button class="quiet" id="near-copy">Copiar código</button></details>':'')+(accept?'<label class="field">Código recebido<textarea id="near-in" placeholder="Cole o código NJ1…" aria-label="Código recebido"></textarea></label><div class="actions"><button class="secondary" id="near-scan">Ler QR Code</button><button class="primary" id="near-accept">Usar código</button></div><div id="near-camera"></div>':'')+'<p id="near-pair-status" role="status"></p><p class="muted">Mesmo Wi-Fi ou hotspot, inclusive sem internet. Redes de convidados podem bloquear a conexão entre aparelhos.</p></section>');
+  const status=$('near-pair-status');
+  if(code){$('near-out').value=code;$('near-copy').onclick=async()=>{try{await navigator.clipboard.writeText(code);status.textContent='Código copiado.';}catch{$('near-out').select();status.textContent='Segure o código selecionado e toque em Copiar.';}};try{await NearbyLink.qr($('near-qr'),code);}catch(e){status.textContent=e.message;}}
+  if(role==='host'&&pendingOffer&&code){const cancel=document.createElement('button');cancel.type='button';cancel.className='quiet';cancel.textContent='Cancelar este convite';cancel.onclick=()=>{pendingOffer?.link.close();closeModal();};status.after(cancel);}
+  if(!accept)return;
+  const submit=async value=>{stopScan();const button=$('near-accept');if(!button)return;button.disabled=true;status.textContent='Conectando os aparelhos…';try{await accept(value);}catch(e){status.textContent=e.message;}finally{if(button.isConnected)button.disabled=false;}};
+  $('near-accept').onclick=()=>submit($('near-in').value);
+  $('near-scan').onclick=async()=>{stopScan();const gen=scanGeneration;status.textContent='Aponte a câmera para o QR Code do outro aparelho.';try{const stop=await NearbyLink.scan($('near-camera'),submit,e=>status.textContent=e.message);if(gen!==scanGeneration)stop();else scanStop=stop;}catch(e){status.textContent='Câmera indisponível. Cole o código manualmente. '+e.message;}};
+ }
+ async function invite(){
+  try{
+   if(role!=='host')throw Error('Crie a mesa primeiro.');if(peers.size>=3&&!pendingOffer)throw Error('A mesa já tem três convidados.');
+   if(!pendingOffer){
+    const id=crypto.randomUUID(),nonce=crypto.randomUUID();
+    const link=NearbyLink.peer((m,l)=>onHostMessage(id,m,l),(status,l)=>{
+     if(status==='open'){if(closed){l.close();return;}try{table.add(id);}catch{l.close();return;}pendingOffer=null;closeModal();broadcast();toast('Amigo conectado. Escolha um personagem livre.');}
+     else if(status==='closed'){peers.delete(id);if(pendingOffer?.id===id)pendingOffer=null;if(table?.members.has(id)){table.remove(id);broadcast();toast('Um amigo desconectou. Um bot assumiu o lugar.');}}
+    });peers.set(id,link);link.attach(link.pc.createDataChannel('noite-de-jogos',{ordered:true}));
+    pendingOffer={id,nonce,link,code:null};note.textContent='Preparando convite local…';const sdp=await NearbyLink.gather(link,await link.pc.createOffer());
+    if(link.closed)throw Error('Convite cancelado.');pendingOffer.code=await NearbyLink.encode({v:1,game:GAME,kind:'offer',id,nonce,sdp});
+   }
+   const offer=pendingOffer;if(!offer.code)return;
+   await showPair('Convide um amigo','1. Seu amigo lê este convite. 2. Ele mostra a resposta. 3. Leia a resposta aqui para concluir.',offer.code,async text=>{
+    const answer=await NearbyLink.decode(text);if(answer.kind!=='answer'||answer.game!==GAME||answer.id!==offer.id||answer.nonce!==offer.nonce)throw Error('Essa resposta pertence a outro convite. Use o convite desta tela.');
+    await offer.link.pc.setRemoteDescription(answer.sdp);$('near-pair-status').textContent='Resposta aceita. Aguardando conexão local. Se não conectar, confira se a rede permite comunicação entre aparelhos.';
+   });
+  }catch(e){if(pendingOffer&&!pendingOffer.code)pendingOffer.link.close();toast(e.message);}
+ }
+ async function joinCode(text){
+  if(role||guest)throw Error('Você já tem um pareamento em andamento. Recarregue a página para aceitar outro convite.');
+  const offer=await NearbyLink.decode(text);if(offer.kind!=='offer'||offer.game!==GAME)throw Error('Abra o mesmo jogo do convite e leia o QR Code de convite.');
+  const link=NearbyLink.peer(onGuestMessage,status=>{
+   if(status==='open'){role='guest';closeModal();toast('Conectado à mesa próxima.');}
+   if(status==='closed'){if(guest===link)guest=null;for(const request of requests.values()){clearTimeout(request.timeout);request.reject(Error('Conexão local interrompida.'));}requests.clear();startButton.disabled=true;$('character').disabled=true;note.textContent='A mesa desconectou. Peça um novo convite e recarregue esta página para parear novamente.';if(state){busy=true;render();}toast('Conexão local interrompida. Peça um novo convite.');}
+  });guest=link;
+  try{await link.pc.setRemoteDescription(offer.sdp);const sdp=await NearbyLink.gather(link,await link.pc.createAnswer()),code=await NearbyLink.encode({...offer,kind:'answer',sdp});
+   await showPair('Mostre sua resposta','Agora quem criou a mesa deve ler este QR Code no próprio aparelho. Aguarde a conexão terminar.',code,null);
+  }catch(e){link.close();throw e;}
+ }
+ function join(){showPair('Entrar na mesa próxima','Peça para quem criou a mesa tocar em Convidar amigo. Leia o convite ou cole o código abaixo.',null,joinCode);}
+ function shutdown(){if(closed)return;closed=true;stopScan();clearTimeout(botTimer);persist();for(const link of peers.values()){try{link.send({type:'closed'});}catch{}link.close();}guest?.close();wake?.release().catch(()=>{});for(const request of requests.values()){clearTimeout(request.timeout);request.resolve(false);}requests.clear();}
+ function menu(){showModal('<h2>Mesa próxima</h2><p>'+ (role==='host'?'Mantenha este aparelho aberto e desbloqueado. Os amigos conectam diretamente a ele.':'A mesa continua enquanto este menu está aberto.')+'</p><div class="actions"><button class="primary" id="near-resume">Voltar</button>'+(role==='host'?'<button class="secondary" id="near-add">Convidar amigo</button>':'')+'<button class="quiet" id="near-exit">Sair da mesa</button></div>');$('near-resume').onclick=closeModal;if($('near-add'))$('near-add').onclick=invite;$('near-exit').onclick=()=>{shutdown();location.assign(location.pathname);};}
+ multiplayer={enabled:true,action,decorateLobby,get pending(){return busy||closed;},start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),menu,result:()=>{
+  if(GAME==='phase10'){phaseResult(info);return;}
+  showModal('<div class="result">'+finaleMarkup()+'<h2>'+(state.winner==='draw'?'Deu empate!':state.winner===0?'Sua dupla venceu!':'A dupla rival venceu!')+'</h2><p>Placar: '+state.sequences[0].length+' × '+state.sequences[1].length+'</p><div class="actions">'+(role==='host'?'<button class="primary" id="near-rematch">Jogar outra</button>':'<p>Aguardando quem criou a mesa.</p>')+'<button class="secondary" id="near-result-exit">Sair da mesa</button></div></div>');if($('near-rematch'))$('near-rematch').onclick=()=>action('rematch');$('near-result-exit').onclick=()=>{shutdown();location.assign(location.pathname);};
+ }};
+ $('character').onchange=()=>action('pick',{seat:Family.names.indexOf($('character').value)});
+ $('family-lobby').onclick=e=>{const el=e.target.closest('[data-intro]');if(el&&!el.classList.contains('taken'))action('pick',{seat:Family.names.indexOf(el.dataset.intro)});};
+ $('near-create').onclick=()=>{let old;try{old=JSON.parse(localStorage.getItem(saveKey)||'null');}catch{}if(old?.state?.winner===null){showModal('<h2>Retomar a mesa próxima?</h2><p>A partida ficou salva neste aparelho. Amigos precisam de novos convites. Vagas sem amigos ficam com bots.</p><div class="actions"><button id="near-restore" class="primary">Retomar partida</button><button id="near-new" class="secondary">Criar nova mesa</button></div>');$('near-restore').onclick=()=>create(true);$('near-new').onclick=()=>create();}else create();};
+ $('near-join').onclick=join;$('near-invite').onclick=invite;menuButton.onclick=()=>role?menu():join();
+ $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(text&&await action('chat',{text}))if(input.value.trim()===text)input.value='';};
+ $('brand').onclick=e=>{e.preventDefault();if(role)menu();else location.assign(location.pathname);};
+ window.addEventListener('pagehide',shutdown);document.addEventListener('visibilitychange',()=>{if(!document.hidden){keepAwake();scheduleBot();if(state)render();}else stopScan();});
+ const code=location.hash.slice(1);if(code.startsWith('NJ1.')){history.replaceState(null,'',location.pathname+location.search);joinCode(code).catch(e=>toast(e.message));}
+ updateLineup();
+}
+
 'use strict';
 // O navegador envia intenções; cartas, bots e validação ficam no servidor.
 (()=>{
+ const params=new URLSearchParams(location.search);
+ const modes=document.createElement('div');modes.className='online-actions game-modes';
+ for(const [label,suffix] of [['On-line',''],['Offline · bots','&solo=1'],['Amigos próximos','&nearby=1']]){const a=document.createElement('a');a.className='quiet';a.textContent=label;a.href=location.pathname+'?game='+GAME+suffix;modes.append(a);}
+ $('setup').append(modes);
+ if(params.get('nearby')==='1'){startNearby();return;}
+ if(!navigator.onLine&&params.get('solo')!=='1'){location.replace(location.pathname+'?game='+GAME+'&solo=1');return;}
  const solo=new URLSearchParams(location.search).get('solo')==='1';
  const button=document.createElement('button');button.className='quiet';button.id='room-chat-button';button.textContent=solo?'On-line':'Chat';document.querySelector('.topbar nav').prepend(button);
  if(solo){button.onclick=()=>location.assign(location.pathname+'?game='+GAME);return;}
@@ -1694,7 +2090,8 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
  $('chat-form').onsubmit=async e=>{e.preventDefault();const input=$('chat-input'),text=input.value.trim();if(!text)return;const send=$('chat-form').querySelector('button');send.disabled=true;$('chat-status').textContent='Enviando…';if(await action('chat',{text})){if(input.value.trim()===text)input.value='';$('chat-status').textContent='';}send.disabled=false;};
  $('reconnect').onclick=join;
  const originalBrand=$('brand').onclick;$('brand').onclick=async e=>{e.preventDefault();if(!info||await action('leave'))location.assign(location.pathname);};
- $('play-solo').onclick=async()=>{if(!info||await action('leave'))location.assign(location.pathname+'?game='+GAME+'&solo=1');};
+ // A saída local deve funcionar mesmo se a sala estiver sem conexão.
+ $('play-solo').onclick=()=>{voice.stop();location.assign(location.pathname+'?game='+GAME+'&solo=1');};
  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(botTimer);else if(info)action('heartbeat');});
  window.addEventListener('online',()=>{if(info)action('heartbeat');else join();});
  window.addEventListener('pagehide',()=>{if(lastToken&&info)fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+lastToken},body:JSON.stringify({type:'leave',game:GAME,joinStamp:info.joinStamp})}).catch(()=>{});});

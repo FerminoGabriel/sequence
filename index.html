@@ -2,6 +2,7 @@
 <html lang="pt-BR"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#10141e"><meta name="description" content="Noite de Jogos: Sequence e Phase 10 com a família, salas on-line, bots e chat.">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Noite de Jogos">
 <title>Noite de Jogos · A família tem lugar marcado</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310141e'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-size='48' fill='%23e8bd74'%3E♠%3C/text%3E%3C/svg%3E">
 <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap');
@@ -80,8 +81,12 @@ dialog{border:1px solid #e8bd7455;border-radius:18px;background:#1b2434;color:va
 @media(prefers-reduced-motion:reduce){.delay-slap,.delay-slap i{animation:none}.delay-slap{opacity:1}}
 
 .voice-bar{display:flex;align-items:center;gap:5px;min-height:25px;flex-wrap:wrap}.voice-bar .quiet{font-size:11px;padding:4px 8px;color:#a8e2ce;border:1px solid #ffffff20}.voice-status{font-size:10px;color:#a9b3c4;flex:1;min-width:100px}.voice-media{display:none}.voice-speaking .portrait{outline:3px solid #64e9b2;outline-offset:2px;border-radius:50%;box-shadow:0 0 12px #64e9b288}.voice-speaking .nameplate:after{content:'🎙';position:absolute;right:-8px;bottom:-5px;background:#173e32;border-radius:50%;font-size:11px;padding:2px}@media(max-width:600px){.voice-bar{gap:3px}.voice-bar .quiet{font-size:9px;padding:3px 5px}.voice-status{font-size:9px;min-width:65px}}
+
+.sync-notice{font-size:10px;color:var(--gold);margin-left:auto;white-space:nowrap}.sync-notice:empty{display:none}
+
+#app-notice{position:fixed;left:12px;right:12px;bottom:12px;z-index:80;display:flex;align-items:center;gap:10px;padding:14px;background:#233044;border:1px solid #e8bd7480;border-radius:12px;box-shadow:0 8px 30px #0008;font-size:12px}#app-notice span{flex:1}#app-notice button{background:#e8bd74;color:#25282d;border-radius:7px;padding:7px 10px}.app-offline .brand{opacity:.7}@media(max-width:600px){#install-app{font-size:9px;padding:6px 3px}#app-notice{font-size:11px;flex-wrap:wrap}}
 </style>
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script defer src="vendor/supabase.js"></script>
 </head><body>
 <header class="topbar"><a class="brand" href="#" id="brand"><b>♠</b><span>SEQUENCE<small>A MESA DA FAMÍLIA</small></span></a><nav aria-label="Opções da mesa"><button class="quiet" id="rules">Regras</button><button class="quiet" id="sound">♫ Som</button><button class="quiet" id="banter-toggle" aria-pressed="true" title="Ligar ou desligar as conversas">☏ Resenha</button><button class="quiet hidden" id="pause">Ⅱ Pausa</button></nav></header>
 <main>
@@ -635,6 +640,161 @@ function createRoomVoice({request,getInfo,audio,toast}){
  return {sync(i){lastConfirmed=Date.now();if((room||busy)&&sessionKey!==key(i))stop('Você mudou de personagem ou sala. Entre na voz novamente.');paint();},stop};
 }
 
+/* Projeções locais usam somente as cartas conhecidas pelo próprio jogador. */
+function projectGameAction(engine, original, game, type, params) {
+ const view = structuredClone(original);
+ if (view.turn !== 0 || view.winner !== null) throw Error('Aguarde sua vez.');
+ if (game === 'sequence') {
+  if (type === 'play') {
+   if (!engine.play(view, params.ci, params.i)) throw Error('Essa casa não está disponível.');
+  } else if (type === 'pass') {
+   if (view.phase !== 'play' || view.hands[0].some(card => engine.legal(view,card,0).length || (!view.exchanged && engine.dead(view,card)))) throw Error('Você ainda pode jogar.');
+   view.turn = (view.turn + 1) % view.players.length;
+   view.phase = 'play';
+   view.exchanged = false;
+  }
+  // Compra e troca dependem de uma carta privada, conhecida apenas pelo servidor.
+  return view;
+ }
+ if (type === 'pdraw') {
+  if (params.source === 'discard') engine.draw(view, 'discard');
+  return view;
+ }
+ // Evita calcular o fim da rodada usando mãos adversárias ocultas.
+ // A sentinela mantém essa decisão no servidor e é retirada da projeção.
+ const ownHand = view.hands[0];
+ const sentinel = '__pending_round__';
+ ownHand.push(sentinel);
+ try {
+  if (type === 'playphase') engine.lay(view, params.ids);
+  if (type === 'hit') engine.hit(view, params.ci, params.target, params.group, params.side);
+  if (type === 'rearrange') engine.rearrange(view, params.ids, params.target, params.group, params.lo);
+  if (type === 'discard') engine.discard(view, params.ci, params.target);
+ } finally {
+  view.hands[0] = view.hands[0].filter(card => card !== sentinel);
+ }
+ if (view.handCounts) view.handCounts[0] = view.hands[0].length;
+ return view;
+}
+
+const NightMetrics = (() => {
+ const entries = [];
+ function record(kind, detail) {
+  entries.push({ kind, ...detail });
+  if (entries.length > 200) entries.shift();
+ }
+ try {
+  new PerformanceObserver(list => {
+   for (const item of list.getEntries()) record('longtask', { ms: Math.round(item.duration) });
+  }).observe({ type: 'longtask', buffered: true });
+ } catch {}
+ if (new URLSearchParams(location.search).get('diagnostics') === '1') {
+  const panel = document.createElement('pre');
+  panel.id = 'performance-diagnostics';
+  panel.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:90;max-width:90vw;max-height:25vh;overflow:auto;background:#10141eee;color:#dcebcf;padding:9px;border:1px solid #64748b;font:11px monospace;pointer-events:none';
+  document.body.append(panel);
+  setInterval(() => {
+   const requests = entries.filter(item => item.kind === 'request');
+   const durations = requests.map(item => item.ms).sort((a,b) => a-b);
+   const renders = entries.filter(item => item.kind === 'render');
+   const longTasks = entries.filter(item => item.kind === 'longtask');
+   const counts = {};
+   requests.forEach(item => { counts[item.type] = (counts[item.type] || 0) + 1; });
+   panel.textContent = JSON.stringify({requests:counts,p50:durations[Math.floor(durations.length*.5)]||0,p95:durations[Math.floor(durations.length*.95)]||0,renders:renders.length,maxRenderMs:Math.max(0,...renders.map(item=>item.ms)),longTasks:longTasks.length,maxLongTaskMs:Math.max(0,...longTasks.map(item=>item.ms))},null,2);
+  },1000);
+ }
+ const api = { record, snapshot: () => structuredClone(entries) };
+ // Somente métricas locais, sem cartas, mensagens, tokens ou dados pessoais.
+ window.NightMetrics = api;
+ return api;
+})();
+
+/* Instalação e atualizações do aplicativo, reutilizando a mesma página. */
+(() => {
+ if (!('serviceWorker' in navigator) || !['http:','https:'].includes(location.protocol)) return;
+ let installPrompt = null;
+ let registration = null;
+ const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+ function installButton() {
+  if (installed || document.getElementById('install-app')) return;
+  const nav = document.querySelector('.topbar nav');
+  if (!nav) return;
+  const button = document.createElement('button');
+  button.id = 'install-app';
+  button.className = 'quiet';
+  button.textContent = 'Instalar app';
+  button.onclick = async () => {
+   if (installPrompt) {
+    const prompt = installPrompt;
+    installPrompt = null;
+    await prompt.prompt();
+    if ((await prompt.userChoice).outcome === 'accepted') button.remove();
+    return;
+   }
+   showTip('No iPhone ou iPad, abra no Safari e use Compartilhar → Adicionar à Tela de Início. No computador ou Android, use Instalar aplicativo no menu do navegador.');
+  };
+  nav.append(button);
+ }
+ function showTip(text, action) {
+  let box = document.getElementById('app-notice');
+  if (!box) {
+   box = document.createElement('aside');
+   box.id = 'app-notice';
+   box.setAttribute('role','status');
+   document.body.append(box);
+  }
+  box.replaceChildren();
+  const message = document.createElement('span');
+  message.textContent = text;
+  const close = document.createElement('button');
+  close.type = 'button';close.textContent = 'Fechar';close.onclick=()=>box.remove();
+  box.append(message);
+  if (action) {
+   const button = document.createElement('button');
+   button.type='button';button.textContent='Atualizar';button.onclick=action;
+   box.append(button);
+  }
+  box.append(close);
+ }
+ function offerUpdate() {
+  if (!registration?.waiting) return;
+  showTip('Uma nova versão do Noite de Jogos está disponível.', () => {
+   const gameVisible = !document.getElementById('game')?.classList.contains('hidden');
+   if (gameVisible && (!window.NightAppSession || window.NightAppSession.active)) {
+    showTip('Finalize a partida e volte à tela inicial para atualizar.');
+    return;
+   }
+   navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});
+   registration.waiting.postMessage({type:'ACTIVATE_UPDATE'});
+  });
+ }
+ window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();installPrompt=event;installButton();
+ });
+ window.addEventListener('appinstalled',()=>document.getElementById('install-app')?.remove());
+ window.addEventListener('load',async()=>{
+  installButton();
+  try {
+   registration=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+   navigator.serviceWorker.ready.then(()=>document.documentElement.dataset.appCache='ready');
+   offerUpdate();
+   registration.addEventListener('updatefound',()=>{
+    const worker=registration.installing;
+    worker?.addEventListener('statechange',()=>{
+     if(worker.state==='installed' && navigator.serviceWorker.controller)offerUpdate();
+    });
+   });
+  } catch (error) {
+   console.warn('Instalação offline indisponível',error.name);
+  }
+ });
+ window.addEventListener('online',()=>document.body.classList.remove('app-offline'));
+ window.addEventListener('offline',()=>{
+  document.body.classList.add('app-offline');
+  showTip('Sem conexão. As salas e a voz voltam quando a internet retornar. Você pode jogar com bots na opção Só eu e bots.');
+ });
+})();
+
 const GAME=new URLSearchParams(location.search).get('game');
 function nightHub(){
  document.body.classList.add('hub-body');document.querySelector('main').innerHTML='<section class="night-hub"><div class="hub-intro"><span class="eyebrow">A MELHOR PARTE DO DIA COMEÇA AQUI</span><h1>Noite de <em>Jogos.</em></h1><p>Puxe uma cadeira. A família já está com as cartas na mão.</p></div><div class="game-choices"><a class="game-choice sequence-choice" href="?game=sequence"><div class="choice-art sequence-art"><div class="mini-board">'+Array.from({length:25},(_,i)=>'<i class="'+([0,6,12,18,24].includes(i)?'gold-chip':i%7===0?'blue-chip':'')+'">'+['♠','♥','♦','♣'][i%4]+'</i>').join('')+'</div></div><div class="choice-copy"><span class="eyebrow">ESTRATÉGIA EM DUPLA</span><h2>Sequence</h2><p>Conecte cinco. Bloqueie o rival.<br>Defenda a honra da sua dupla.</p><span class="choice-enter">Sentar à mesa <b>↗</b></span></div></a><a class="game-choice phase-choice" href="?game=phase10"><div class="choice-art phase-art"><span class="show-card sc-red">7</span><span class="show-card sc-blue">8</span><span class="show-card sc-gold">9</span><span class="show-card sc-green">10</span></div><div class="choice-copy"><span class="eyebrow">DEZ FASES. MIL DESCULPAS.</span><h2>Phase 10</h2><p>Monte sua fase. Esvazie a mão.<br>Hoje é cada um por si.</p><span class="choice-enter">Entrar na rodada <b>↗</b></span></div></a></div><div class="hub-family">'+Family.names.map(n=>'<div data-intro="'+n+'">'+Family.avatar(n)+'<span>'+n+'</span></div>').join('')+'<p>Quatro personagens.<br><strong>Resenha sem limite.</strong></p></div><p class="hub-foot">1–4 pessoas · bots nas vagas · chat na mesa</p></section>';
@@ -674,8 +834,8 @@ function stopChat(){clearTimeout(chatTimer);chatGeneration++;clearSpeech();}
 function nextChat(delay=7000){clearTimeout(chatTimer);if(!prefs.banter||document.hidden)return;const gen=chatGeneration;chatTimer=setTimeout(()=>{if(gen!==chatGeneration)return;if(!state||$('game').classList.contains('hidden')){lobbyIndex++;renderLobby();nextChat(13000);return;}if(paused||state.winner!==null){nextChat();return;}const scene=PhaseScenes[Math.floor(Math.random()*PhaseScenes.length)];let i=0;function speak(){if(gen!==chatGeneration)return;const [name,text]=scene[i++];Speech.say(name,text);chatTimer=setTimeout(()=>i<scene.length?speak():nextChat(4500+Math.random()*5000),13000);}speak();},delay);}
 function card(c,mini=false){return '<span class="p-card pc-'+c[0]+(mini?' mini':'')+'" title="'+E.label(c)+'"><small>'+({R:'●',B:'◆',G:'♣',Y:'★',W:'✦',S:'⊘'}[c[0]])+'</small><b>'+(c==='W'?'✦':c==='S'?'⊘':E.num(c))+'</b></span>';}
 function renderPeople(){const seat=(p,i,pos)=>'<div class="player '+pos+(state.turn===i?' active':'')+'" data-speaker="'+p.name+'">'+portrait(p.name)+'<div class="nameplate"><strong>'+p.name+'</strong><small>Fase '+state.progress[i]+' · '+state.scores[i]+' pts</small><small>'+(state.handCounts?.[i]??state.hands[i].length)+' cartas'+(state.skips[i]?' · ⊘ pula':multiplayer?.enabled?(p.human&&p.online?' · on-line':' · bot'):' · bot')+'</small></div></div>';$('players').innerHTML=state.players.slice(1).map((p,k)=>seat(p,k+1,['seat-left','seat-top','seat-right'][k])).join('');$('human-seat').dataset.speaker=state.players[0].name;$('human-seat').innerHTML=portrait(state.players[0].name)+'<div class="nameplate"><strong>'+state.players[0].name+'</strong><small>Fase '+state.progress[0]+' · '+state.scores[0]+' pts</small></div>';}
-function render(){if(!state)return;const my=state.turn===0&&state.phase==='play'&&!paused;renderPeople();$('game-mode').textContent='PHASE 10 · RODADA '+state.round;$('score').textContent='Sua fase '+state.progress[0]+'/10';$('deck-count').textContent=(state.deckCount??state.deck.length)+' cartas';$('hand-count').textContent=state.hands[0].length+' cartas';$('phase-goal').textContent=state.laid[0].length?(state.turn===0&&state.laidThisTurn?'Fase baixada! Descarte; os encaixes ficam para sua próxima vez.':'Fase baixada! Encaixe cartas ou reorganize um curinga.'):'Fase '+state.progress[0]+': '+E.descriptions[state.progress[0]-1];
- $('phase-piles').innerHTML='<button class="pile-button" id="stock-pile" '+(state.turn===0&&state.phase==='draw'&&!paused?'':'disabled')+'><span class="p-card p-back">✦</span><small>Comprar</small></button><button class="pile-button" id="discard-pile" '+(state.turn===0&&state.phase==='draw'&&!paused&&state.pile.length&&state.pile.at(-1)!=='S'?'':'disabled')+'>'+(state.pile.length?card(state.pile.at(-1)):'<span class="p-card empty">—</span>')+'<small>Descarte</small></button><div class="phase-round-label"><b>RODADA '+state.round+'</b><span>'+(state.tiebreak?'Desempate da fase 10':'Baixe a fase. Esvazie a mão.')+'</span></div>';
+function render(){if(!state)return;const my=state.turn===0&&state.phase==='play'&&!paused&&!multiplayer?.pending;renderPeople();$('game-mode').textContent='PHASE 10 · RODADA '+state.round;$('score').textContent='Sua fase '+state.progress[0]+'/10';$('deck-count').textContent=(state.deckCount??state.deck.length)+' cartas';$('hand-count').textContent=state.hands[0].length+' cartas';$('phase-goal').textContent=state.laid[0].length?(state.turn===0&&state.laidThisTurn?'Fase baixada! Descarte; os encaixes ficam para sua próxima vez.':'Fase baixada! Encaixe cartas ou reorganize um curinga.'):'Fase '+state.progress[0]+': '+E.descriptions[state.progress[0]-1];
+ $('phase-piles').innerHTML='<button class="pile-button" id="stock-pile" '+(state.turn===0&&state.phase==='draw'&&!paused&&!multiplayer?.pending?'':'disabled')+'><span class="p-card p-back">✦</span><small>Comprar</small></button><button class="pile-button" id="discard-pile" '+(state.turn===0&&state.phase==='draw'&&!paused&&!multiplayer?.pending&&state.pile.length&&state.pile.at(-1)!=='S'?'':'disabled')+'>'+(state.pile.length?card(state.pile.at(-1)):'<span class="p-card empty">—</span>')+'<small>Descarte</small></button><div class="phase-round-label"><b>RODADA '+state.round+'</b><span>'+(state.tiebreak?'Desempate da fase 10':'Baixe a fase. Esvazie a mão.')+'</span></div>';
  $('phase-melds').innerHTML=state.players.map((p,i)=>'<div class="meld-row"><strong>'+p.name+' <small>F'+state.progress[i]+'</small></strong><div class="meld-groups">'+(state.laid[i].length?state.laid[i].map((m,g)=>'<button class="meld-group" data-target="'+i+'" data-group="'+g+'" aria-label="Encaixar em '+p.name+', grupo '+(g+1)+'" '+(!my||!E.canHit(state)||(m.kind==='run'?(!phaseSelected.size&&!m.cards.includes('W')):phaseSelected.size!==1)?'disabled':'')+'>'+m.cards.map(c=>card(c,true)).join('')+'</button>').join(''):'<span class="empty-phase">'+E.descriptions[state.progress[i]-1]+'</span>')+'</div></div>').join('');
  renderPhaseHand();
  $('turn-label').textContent=state.phase==='round'?'RODADA ENCERRADA':state.winner!==null?'PARTIDA ENCERRADA':state.turn===0?'SUA VEZ':'VEZ DE '+state.players[state.turn].name.toUpperCase();$('turn-title').textContent=state.phase==='round'?state.players[state.roundResult.winner].name+' bateu!':state.winner!==null?state.players[state.winner].name+' venceu!':state.turn!==0?'Preparando a jogada…':state.phase==='draw'?'Compre do monte ou do descarte':state.laid[0].length?(state.laidThisTurn?'Descarte e aguarde sua próxima vez':'Encaixe ou descarte uma carta'):'Monte sua fase ou descarte';$('status').textContent=state.phase==='round'?'Próxima rodada em alguns segundos. Pontos: '+state.roundResult.penalties.map((v,i)=>state.players[i].name+' +'+v).join(' · '):phaseSelected.size>1?phaseSelected.size+' cartas selecionadas. Toque de novo para desmarcar.':state.phase==='draw'?'Toque em um dos dois montes no centro.':state.laidThisTurn?'Nesta vez, só falta descartar. Você poderá encaixar quando sua vez voltar.':'Arraste para organizar. Toque para selecionar; em uma sequência, pode selecionar várias cartas.';
@@ -771,7 +931,31 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
  const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
  let lastToken=null,client,channel,info=null,queue=Promise.resolve(),refreshTimer,botTimer,heartbeatTimer,lastMessage=0,unread=0,ended=false,connected=false,joining=false;
  const voice=createRoomVoice({request,getInfo:()=>info,audio,toast});
+ const gameActions=new Set(['play','draw','pass','exchange','pdraw','playphase','hit','rearrange','discard']);
+ const queuedReads=new Map();
+ let optimistic=null,awaitingSync=false,deferred=null;
+ let wantedRevision=-1,wantedChat=0,forceSync=false;
+ let lastChatSignature='',lastLobbySignature='',lastGameSignature='';
+ const syncNotice=document.createElement('span');
+ syncNotice.className='sync-notice';syncNotice.setAttribute('role','status');
+ document.querySelector('.game-strip').append(syncNotice);
  const setStatus=t=>{note.textContent=t;};
+ const isPending=()=>!!optimistic||awaitingSync;
+ function paintGame(){
+  const began=performance.now();render();
+  NightMetrics.record('render',{ms:+(performance.now()-began).toFixed(1)});
+ }
+ function paintPending(){
+  syncNotice.textContent=optimistic?'Confirmando jogada…':awaitingSync?'Reconectando à mesa…':'';
+  $('game').setAttribute('aria-busy',String(isPending()));
+ }
+ function clearSelection(){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
+ function gameSignature(value){
+  if(!value)return '';
+  return JSON.stringify([value.move,value.turn,value.phase,value.winner,value.hands[0],value.players.map(p=>[p.human,p.online]),value.deckCount,value.handCounts]);
+ }
+ function needsRefresh(){return forceSync||awaitingSync||wantedChat>lastMessage||wantedRevision>(info?.room.revision??-1);}
+
  const decorateLobby=()=>{
   if(!info)return;
   document.querySelectorAll('[data-intro]').forEach(el=>{
@@ -781,7 +965,10 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   });
  };
  const updateChat=messages=>{
-  const box=$('chat-messages'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<70;
+  const signature=JSON.stringify(messages.map(m=>[m.id,m.body]));
+  if(signature===lastChatSignature)return;
+  lastChatSignature=signature;
+  const box=$('chat-messages');
   const newest=messages.at(-1)?.id||0;
   for(const m of messages)if(m.id>lastMessage&&Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);
   lastMessage=newest;button.textContent='Chat';
@@ -806,23 +993,31 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   $('chat-input').disabled=!chosen;
   $('chat-form').querySelector('button').disabled=!chosen;
   $('chat-input').placeholder=chosen?'Fale com a mesa…':'Escolha seu personagem para conversar…';
-  updateLineup();decorateLobby();
+  const signature=JSON.stringify([info.room.id,info.room.status,info.seat,info.host,info.members]);
+  if(signature!==lastLobbySignature){lastLobbySignature=signature;updateLineup();}
   $('chat-title').textContent='Chat · Sala '+info.room.number;
   if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
  }
- function apply(next){
+ function apply(next,confirmedAction=false){
+  if(optimistic&&!confirmedAction){
+   if(!deferred||next.room.id!==deferred.room.id||next.room.revision>=deferred.room.revision)deferred=next;
+   return;
+  }
   if(info?.room.id===next.room.id&&next.room.revision<info.room.revision)return;
   const changedRoom=info?.room.id!==next.room.id,previous=state;
+  if(changedRoom){lastChatSignature='';lastLobbySignature='';lastGameSignature='';wantedRevision=-1;wantedChat=0;}
+  awaitingSync=false;paintPending();
   info=next;connected=true;voice.sync(info);
   if(changedRoom){lastMessage=0;unread=0;ended=false;subscribe();}
   updateChat(next.chat);
   if(next.state){
    const sameHand=previous&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
-   const newMove=previous&&next.state.move>previous.move;
+   const newMove=confirmedAction||(previous&&next.state.move>previous.move);
    state=next.state;
    if(!sameHand||state.turn!==0||state.phase!=='play'){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
    if($('game').classList.contains('hidden')){if($('modal').open)$('modal').close();showGame();}
-   else render();
+   else if(confirmedAction||gameSignature(state)!==lastGameSignature)paintGame();
+   lastGameSignature=gameSignature(state);
    if(newMove&&state.last)audio.fx(state.winner!==null?'win':state.last.claims?'sequence':state.last.remove?'remove':'place');
    if(state.winner!==null&&!ended){ended=true;showResult();}
   }else{
@@ -830,37 +1025,97 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
    ended=false;
   }
   toggle('continue',false);renderInfo();
+  window.NightAppSession={active:!!state&&state.winner===null};
   clearTimeout(botTimer);
   if(next.host&&next.nextBotAt!==null&&!document.hidden)botTimer=setTimeout(()=>action('tick'),Math.max(250,next.nextBotAt-Date.now()+150));
  }
  async function request(type,params={}){
-  const {data:{session},error}=await client.auth.getSession();
-  if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
-  lastToken=session.access_token;
-  const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(20000)});
-  const data=await response.json();if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');return data;
+  const began=performance.now();let status=0;
+  try{
+   const {data:{session},error}=await client.auth.getSession();
+   if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
+   lastToken=session.access_token;
+   const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{
+    method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},
+    body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(12000),cache:'no-store'
+   });
+   status=response.status;
+   const data=await response.json();
+   if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');
+   return data;
+  }finally{
+   NightMetrics.record('request',{type,status,ms:Math.round(performance.now()-began)});
+  }
  }
  function action(type,params={}){
+  const changesGame=gameActions.has(type);
+  if(changesGame&&isPending())return Promise.resolve(false);
+  if(changesGame&&!navigator.onLine){toast('Sem conexão. Reconecte para jogar na sala.');return Promise.resolve(false);}
+  const isRead=['sync','heartbeat','tick'].includes(type);
+  if(isRead&&queuedReads.has(type))return queuedReads.get(type);
   const baseRevision=info?.room.revision;
-  const task=async()=>{
+  let projection=null;
+  if(changesGame){
+   if(!state||state.turn!==0||paused)return Promise.resolve(false);
    try{
-    const data=await request(type,{...params,...(['play','draw','pass','exchange','pdraw','playphase','hit','rearrange','discard'].includes(type)?{revision:baseRevision}:{})});
-    if(!data.left)apply(data);else voice.stop();return true;
+    const view=projectGameAction(E,state,GAME,type,params);
+    projection={original:structuredClone(state)};
+    optimistic=projection;state=view;clearSelection();paintPending();paintGame();
+   }catch(error){toast(error.message);return Promise.resolve(false);}
+  }
+  const enqueued=performance.now();
+  const task=async()=>{
+   NightMetrics.record('queue',{type,ms:Math.round(performance.now()-enqueued)});
+   if(type==='sync'&&!needsRefresh())return true;
+   try{
+    forceSync=false;
+    const data=await request(type,{...params,...(changesGame?{revision:baseRevision}:{})});
+    if(changesGame)optimistic=null;
+    if(!data.left)apply(data,changesGame);else voice.stop();
+    if(deferred&&!optimistic){const latest=deferred;deferred=null;apply(latest);}
+    return true;
    }catch(error){
     const message=error.message||'Conexão indisponível.';
-    if(['sync','heartbeat','tick'].includes(type)){connected=false;setStatus('Conexão interrompida. Tentaremos novamente.');}
+    if(projection){
+     optimistic=null;state=projection.original;clearSelection();awaitingSync=true;paintPending();paintGame();
+     if(deferred){const latest=deferred;deferred=null;apply(latest,true);}
+    }
+    if(isRead){connected=false;setStatus('Conexão interrompida. Tentaremos novamente.');}
     else toast(message);
     if(type==='chat')$('chat-status').textContent=message;
-    if(!['sync','heartbeat','join'].includes(type))refresh();
+    if(!['sync','heartbeat','join'].includes(type)){forceSync=true;refresh();}
     return false;
+   }finally{
+    if(changesGame){optimistic=null;paintPending();}
+    if(isRead)queuedReads.delete(type);
+    if(needsRefresh()&&!optimistic)refresh(connected?150:3000);
    }
   };
-  queue=queue.then(task,task);return queue;
+  const promise=queue.then(task,task);queue=promise;
+  if(isRead){queuedReads.set(type,promise);promise.finally(()=>queuedReads.delete(type));}
+  return promise;
  }
- function refresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.hidden&&info)action('sync');},180);}
+ function refresh(delay=120){
+  clearTimeout(refreshTimer);
+  refreshTimer=setTimeout(()=>{if(!document.hidden&&info&&!optimistic&&needsRefresh())action('sync');},delay);
+ }
  function subscribe(){
   if(channel)client.removeChannel(channel);
-  channel=client.channel('sala-'+info.room.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'seq_rooms',filter:'id=eq.'+info.room.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'seq_chat',filter:'room_id=eq.'+info.room.id},refresh).subscribe(status=>{if(status==='SUBSCRIBED')refresh();});
+  channel=client.channel('sala-'+info.room.id)
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'seq_rooms',filter:'id=eq.'+info.room.id},payload=>{
+    wantedRevision=Math.max(wantedRevision,Number(payload.new.revision)||0);
+    if(wantedRevision>info.room.revision)refresh();
+   })
+   .on('postgres_changes',{event:'INSERT',schema:'public',table:'seq_chat',filter:'room_id=eq.'+info.room.id},payload=>{
+    wantedChat=Math.max(wantedChat,Number(payload.new.id)||0);
+    if(wantedChat>lastMessage)refresh();
+   })
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED'){
+     // Captura alterações ocorridas entre a resposta de entrada e a assinatura.
+     forceSync=true;refresh();
+    }
+   });
  }
  async function join(){
   if(joining)return;joining=true;setStatus('Entrando na primeira sala disponível…');startButton.disabled=true;
@@ -874,7 +1129,7 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   }catch(e){connected=false;setStatus('Não foi possível entrar: '+e.message+'. Toque em Reconectar.');}
   finally{joining=false;}
  }
- multiplayer={enabled:true,action,decorateLobby,start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
+ multiplayer={enabled:true,action,decorateLobby,get pending(){return isPending();},start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
   menu:()=>{
    showModal('<h2>Sala '+(info?.room.number||'')+'</h2><p>A partida on-line continua enquanto este menu está aberto. Se sair, um bot assume seu lugar.</p><div class="actions"><button class="primary" id="resume">Voltar à mesa</button><button class="secondary" id="leave-room">Sair da sala</button></div>');
    $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};
@@ -1034,7 +1289,7 @@ updateLineup();renderLobby();fitTable();nextChat();
 function initial(name){return name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();}
 function render(){
  if(!state)return;
- const p=state.players[state.turn],myTurn=state.turn===0&&state.phase==='play'&&!paused;
+ const p=state.players[state.turn],myTurn=state.turn===0&&state.phase==='play'&&!paused&&!multiplayer?.pending;
  const card=state.hands[0][selected],legal=myTurn&&selected>=0?E.legal(state,card,0):[];
  $('game-mode').textContent=(state.config.count===4?'DUPLAS · ':'DUELO · ')+({easy:'FÁCIL',medium:'MÉDIO',hard:'DIFÍCIL'}[state.config.difficulty]);
  renderPeople();
@@ -1069,6 +1324,7 @@ function render(){
  $('turn-title').textContent=title;$('status').textContent=status;
  $('card-help').textContent=myTurn&&selected>=0?E.fullLabel(card)+' · '+status:state.turn===0&&state.phase==='draw'?'Clique em “Comprar carta” para terminar sua vez.':'Selecione uma carta para iluminar as casas disponíveis.';
  toggle('draw',state.turn===0&&state.phase==='draw'&&!paused);
+ for(const id of ['draw','exchange','pass'])$(id).disabled=!!multiplayer?.pending;
  toggle('exchange',myTurn&&selected>=0&&E.dead(state,card)&&!state.exchanged);
  const hasMove=state.hands[0].some(c=>E.legal(state,c,0).length),canExchange=!state.exchanged&&state.hands[0].some(c=>E.dead(state,c));
  toggle('pass',myTurn&&!hasMove&&!canExchange);
@@ -1176,7 +1432,31 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
  const panel=document.createElement('section');panel.id='room-chat';panel.setAttribute('aria-label','Chat da sala');panel.innerHTML='<div id="chat-messages" role="log" aria-live="polite"></div><form id="chat-form"><span id="chat-title">Chat</span><input id="chat-input" type="text" maxlength="300" placeholder="Fale com a mesa…" aria-label="Mensagem para a sala" autocomplete="off"><button class="primary" type="submit" aria-label="Enviar mensagem">Enviar ↗</button></form><p id="chat-status" role="status"></p>';document.body.append(panel);
  let lastToken=null,client,channel,info=null,queue=Promise.resolve(),refreshTimer,botTimer,heartbeatTimer,lastMessage=0,unread=0,ended=false,connected=false,joining=false;
  const voice=createRoomVoice({request,getInfo:()=>info,audio,toast});
+ const gameActions=new Set(['play','draw','pass','exchange','pdraw','playphase','hit','rearrange','discard']);
+ const queuedReads=new Map();
+ let optimistic=null,awaitingSync=false,deferred=null;
+ let wantedRevision=-1,wantedChat=0,forceSync=false;
+ let lastChatSignature='',lastLobbySignature='',lastGameSignature='';
+ const syncNotice=document.createElement('span');
+ syncNotice.className='sync-notice';syncNotice.setAttribute('role','status');
+ document.querySelector('.game-strip').append(syncNotice);
  const setStatus=t=>{note.textContent=t;};
+ const isPending=()=>!!optimistic||awaitingSync;
+ function paintGame(){
+  const began=performance.now();render();
+  NightMetrics.record('render',{ms:+(performance.now()-began).toFixed(1)});
+ }
+ function paintPending(){
+  syncNotice.textContent=optimistic?'Confirmando jogada…':awaitingSync?'Reconectando à mesa…':'';
+  $('game').setAttribute('aria-busy',String(isPending()));
+ }
+ function clearSelection(){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
+ function gameSignature(value){
+  if(!value)return '';
+  return JSON.stringify([value.move,value.turn,value.phase,value.winner,value.hands[0],value.players.map(p=>[p.human,p.online]),value.deckCount,value.handCounts]);
+ }
+ function needsRefresh(){return forceSync||awaitingSync||wantedChat>lastMessage||wantedRevision>(info?.room.revision??-1);}
+
  const decorateLobby=()=>{
   if(!info)return;
   document.querySelectorAll('[data-intro]').forEach(el=>{
@@ -1186,7 +1466,10 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   });
  };
  const updateChat=messages=>{
-  const box=$('chat-messages'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<70;
+  const signature=JSON.stringify(messages.map(m=>[m.id,m.body]));
+  if(signature===lastChatSignature)return;
+  lastChatSignature=signature;
+  const box=$('chat-messages');
   const newest=messages.at(-1)?.id||0;
   for(const m of messages)if(m.id>lastMessage&&Date.now()-Date.parse(m.created_at)<22000)Speech.say(m.speaker,m.body,true);
   lastMessage=newest;button.textContent='Chat';
@@ -1211,23 +1494,31 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   $('chat-input').disabled=!chosen;
   $('chat-form').querySelector('button').disabled=!chosen;
   $('chat-input').placeholder=chosen?'Fale com a mesa…':'Escolha seu personagem para conversar…';
-  updateLineup();decorateLobby();
+  const signature=JSON.stringify([info.room.id,info.room.status,info.seat,info.host,info.members]);
+  if(signature!==lastLobbySignature){lastLobbySignature=signature;updateLineup();}
   $('chat-title').textContent='Chat · Sala '+info.room.number;
   if(state&&!$('game').classList.contains('hidden'))$('game-mode').textContent='SALA '+info.room.number+(GAME==='phase10'?' · PHASE 10':' · DUPLAS');
  }
- function apply(next){
+ function apply(next,confirmedAction=false){
+  if(optimistic&&!confirmedAction){
+   if(!deferred||next.room.id!==deferred.room.id||next.room.revision>=deferred.room.revision)deferred=next;
+   return;
+  }
   if(info?.room.id===next.room.id&&next.room.revision<info.room.revision)return;
   const changedRoom=info?.room.id!==next.room.id,previous=state;
+  if(changedRoom){lastChatSignature='';lastLobbySignature='';lastGameSignature='';wantedRevision=-1;wantedChat=0;}
+  awaitingSync=false;paintPending();
   info=next;connected=true;voice.sync(info);
   if(changedRoom){lastMessage=0;unread=0;ended=false;subscribe();}
   updateChat(next.chat);
   if(next.state){
    const sameHand=previous&&JSON.stringify(previous.hands[0])===JSON.stringify(next.state.hands[0]);
-   const newMove=previous&&next.state.move>previous.move;
+   const newMove=confirmedAction||(previous&&next.state.move>previous.move);
    state=next.state;
    if(!sameHand||state.turn!==0||state.phase!=='play'){selected=-1;if(GAME==='phase10')phaseSelected.clear();}
    if($('game').classList.contains('hidden')){if($('modal').open)$('modal').close();showGame();}
-   else render();
+   else if(confirmedAction||gameSignature(state)!==lastGameSignature)paintGame();
+   lastGameSignature=gameSignature(state);
    if(newMove&&state.last)audio.fx(state.winner!==null?'win':state.last.claims?'sequence':state.last.remove?'remove':'place');
    if(state.winner!==null&&!ended){ended=true;showResult();}
   }else{
@@ -1235,37 +1526,97 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
    ended=false;
   }
   toggle('continue',false);renderInfo();
+  window.NightAppSession={active:!!state&&state.winner===null};
   clearTimeout(botTimer);
   if(next.host&&next.nextBotAt!==null&&!document.hidden)botTimer=setTimeout(()=>action('tick'),Math.max(250,next.nextBotAt-Date.now()+150));
  }
  async function request(type,params={}){
-  const {data:{session},error}=await client.auth.getSession();
-  if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
-  lastToken=session.access_token;
-  const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(20000)});
-  const data=await response.json();if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');return data;
+  const began=performance.now();let status=0;
+  try{
+   const {data:{session},error}=await client.auth.getSession();
+   if(error||!session)throw new Error('Sessão expirada. Toque em Reconectar.');
+   lastToken=session.access_token;
+   const response=await fetch(ONLINE_CONFIG.url+'/functions/v1/sequence-room',{
+    method:'POST',headers:{'Content-Type':'application/json',apikey:ONLINE_CONFIG.key,Authorization:'Bearer '+session.access_token},
+    body:JSON.stringify({type,game:GAME,...params}),signal:AbortSignal.timeout(12000),cache:'no-store'
+   });
+   status=response.status;
+   const data=await response.json();
+   if(!response.ok||data.error)throw new Error(data.error||'Não foi possível conectar à sala.');
+   return data;
+  }finally{
+   NightMetrics.record('request',{type,status,ms:Math.round(performance.now()-began)});
+  }
  }
  function action(type,params={}){
+  const changesGame=gameActions.has(type);
+  if(changesGame&&isPending())return Promise.resolve(false);
+  if(changesGame&&!navigator.onLine){toast('Sem conexão. Reconecte para jogar na sala.');return Promise.resolve(false);}
+  const isRead=['sync','heartbeat','tick'].includes(type);
+  if(isRead&&queuedReads.has(type))return queuedReads.get(type);
   const baseRevision=info?.room.revision;
-  const task=async()=>{
+  let projection=null;
+  if(changesGame){
+   if(!state||state.turn!==0||paused)return Promise.resolve(false);
    try{
-    const data=await request(type,{...params,...(['play','draw','pass','exchange','pdraw','playphase','hit','rearrange','discard'].includes(type)?{revision:baseRevision}:{})});
-    if(!data.left)apply(data);else voice.stop();return true;
+    const view=projectGameAction(E,state,GAME,type,params);
+    projection={original:structuredClone(state)};
+    optimistic=projection;state=view;clearSelection();paintPending();paintGame();
+   }catch(error){toast(error.message);return Promise.resolve(false);}
+  }
+  const enqueued=performance.now();
+  const task=async()=>{
+   NightMetrics.record('queue',{type,ms:Math.round(performance.now()-enqueued)});
+   if(type==='sync'&&!needsRefresh())return true;
+   try{
+    forceSync=false;
+    const data=await request(type,{...params,...(changesGame?{revision:baseRevision}:{})});
+    if(changesGame)optimistic=null;
+    if(!data.left)apply(data,changesGame);else voice.stop();
+    if(deferred&&!optimistic){const latest=deferred;deferred=null;apply(latest);}
+    return true;
    }catch(error){
     const message=error.message||'Conexão indisponível.';
-    if(['sync','heartbeat','tick'].includes(type)){connected=false;setStatus('Conexão interrompida. Tentaremos novamente.');}
+    if(projection){
+     optimistic=null;state=projection.original;clearSelection();awaitingSync=true;paintPending();paintGame();
+     if(deferred){const latest=deferred;deferred=null;apply(latest,true);}
+    }
+    if(isRead){connected=false;setStatus('Conexão interrompida. Tentaremos novamente.');}
     else toast(message);
     if(type==='chat')$('chat-status').textContent=message;
-    if(!['sync','heartbeat','join'].includes(type))refresh();
+    if(!['sync','heartbeat','join'].includes(type)){forceSync=true;refresh();}
     return false;
+   }finally{
+    if(changesGame){optimistic=null;paintPending();}
+    if(isRead)queuedReads.delete(type);
+    if(needsRefresh()&&!optimistic)refresh(connected?150:3000);
    }
   };
-  queue=queue.then(task,task);return queue;
+  const promise=queue.then(task,task);queue=promise;
+  if(isRead){queuedReads.set(type,promise);promise.finally(()=>queuedReads.delete(type));}
+  return promise;
  }
- function refresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.hidden&&info)action('sync');},180);}
+ function refresh(delay=120){
+  clearTimeout(refreshTimer);
+  refreshTimer=setTimeout(()=>{if(!document.hidden&&info&&!optimistic&&needsRefresh())action('sync');},delay);
+ }
  function subscribe(){
   if(channel)client.removeChannel(channel);
-  channel=client.channel('sala-'+info.room.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'seq_rooms',filter:'id=eq.'+info.room.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'seq_chat',filter:'room_id=eq.'+info.room.id},refresh).subscribe(status=>{if(status==='SUBSCRIBED')refresh();});
+  channel=client.channel('sala-'+info.room.id)
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'seq_rooms',filter:'id=eq.'+info.room.id},payload=>{
+    wantedRevision=Math.max(wantedRevision,Number(payload.new.revision)||0);
+    if(wantedRevision>info.room.revision)refresh();
+   })
+   .on('postgres_changes',{event:'INSERT',schema:'public',table:'seq_chat',filter:'room_id=eq.'+info.room.id},payload=>{
+    wantedChat=Math.max(wantedChat,Number(payload.new.id)||0);
+    if(wantedChat>lastMessage)refresh();
+   })
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED'){
+     // Captura alterações ocorridas entre a resposta de entrada e a assinatura.
+     forceSync=true;refresh();
+    }
+   });
  }
  async function join(){
   if(joining)return;joining=true;setStatus('Entrando na primeira sala disponível…');startButton.disabled=true;
@@ -1279,7 +1630,7 @@ createDelayReminder(()=>({state,online:!!multiplayer?.enabled,paused}));
   }catch(e){connected=false;setStatus('Não foi possível entrar: '+e.message+'. Toque em Reconectar.');}
   finally{joining=false;}
  }
- multiplayer={enabled:true,action,decorateLobby,start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
+ multiplayer={enabled:true,action,decorateLobby,get pending(){return isPending();},start:()=>action('start',{partner:$('companion').value,difficulty:new FormData(setup).get('difficulty')}),
   menu:()=>{
    showModal('<h2>Sala '+(info?.room.number||'')+'</h2><p>A partida on-line continua enquanto este menu está aberto. Se sair, um bot assume seu lugar.</p><div class="actions"><button class="primary" id="resume">Voltar à mesa</button><button class="secondary" id="leave-room">Sair da sala</button></div>');
    $('resume').onclick=closeModal;$('leave-room').onclick=async()=>{if(await action('leave'))location.assign(location.pathname);};

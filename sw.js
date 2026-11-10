@@ -1,5 +1,5 @@
 /* Cache exclusivo dos arquivos públicos. Partidas on-line continuam autoritativas. */
-const CACHE = 'noite-public-v20261110-1';
+const CACHE = 'noite-public-049bc5d9f398';
 const ROOT = new URL('./', self.location.href).href;
 const SHELL = ['index.html','manifest.webmanifest','vendor/supabase.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable.png','icons/apple-touch-icon.png'];
 self.addEventListener('install', event => {

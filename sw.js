@@ -1,5 +1,5 @@
 /* Recursos públicos versionados. O cache não intercepta autenticação ou partidas. */
-const CACHE = 'noite-public-7497e96ac441';
+const CACHE = 'noite-public-iverson-f0929ec';
 const ROOT = new URL('./',self.location.href).href;
 const SHELL = ['index.html','manifest.webmanifest','vendor/supabase.js','vendor/fflate.js','vendor/qrcode.js','vendor/jsqr.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable.png','icons/apple-touch-icon.png'];
 const ASSETS = new Set(SHELL.map(path=>new URL(path,ROOT).href));
